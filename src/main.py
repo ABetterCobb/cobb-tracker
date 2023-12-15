@@ -28,6 +28,7 @@ def clean_name(input_string: str):
 
 
 def get_minutes_docs():
+    MINUTES_FOLDER.mkdir(exist_ok=True)
     session = requests.Session()
 
     response = session.get(URL_AGENDAS, headers={"User-Agent": USER_AGENT})
