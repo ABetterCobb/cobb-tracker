@@ -4,6 +4,7 @@ import sys
 
 import requests
 from bs4 import BeautifulSoup
+from bs4.element import Tag
 
 URL_BASE = "https://www.mariettaga.gov"
 URL_AGENDAS = f"{URL_BASE}/AgendaCenter"
@@ -19,8 +20,15 @@ RE_ALPHNUM = re.compile(r"[^a-zA-Z0-9]")
 RE_ALPHA = re.compile(r"[0-9\.\-]")
 
 
-def clean_name(input_string: str):
-    """Use regex to replace non-alphanumeric characters with underscores"""
+def clean_name(input_string: str) -> str:
+    """Use regex to replace non-alphanumeric characters with underscores
+
+    Args:
+        input_string (str): String to clean and format, such as a meeting title._
+
+    Returns:
+        str: Formatted string.
+    """
     # TODO: This is a little messy and leaves some errant "_" at the end of some folders.
     input_string = RE_ALPHA.sub("", input_string)
     result_string = (
@@ -28,13 +36,29 @@ def clean_name(input_string: str):
     )
     return result_string
 
-def is_year(input_string: str):
-    year = re.compile(r'\d{4}')
-    if year.match(input_string):
-        return True
-    else:
-        return False
-def get_years(agenda_container: str):
+
+def is_year(input_string: str) -> bool:
+    """Is the input string a 4-digit number?
+
+    Args:
+        input_string (str): String to evaluate
+
+    Returns:
+        bool: Well is it?
+    """
+    year = re.compile(r"\d{4}")
+    return True if year.match(input_string) else False
+
+
+def get_years(agenda_container: Tag) -> list[str]:
+    """Find all the list items that define which years are available to filter on.
+
+    Args:
+        agenda_container (Tag): HTML DOM object that contains the year list.
+
+    Returns:
+        list[str]: List of year strings.
+    """
     year_list = agenda_container.find("ul", class_="years")
     filtered_year_list = []
     for entry in year_list.find_all("li"):
@@ -42,6 +66,61 @@ def get_years(agenda_container: str):
         if is_year(entry_string):
             filtered_year_list.append(entry_string)
     return filtered_year_list
+
+
+def process_row_documents(row: Tag, session: requests.Session) -> None:
+    """Parse meeting information and documents from a table row.
+
+    Args:
+        row (Tag): Row from a Marietta meeting list table.
+        session (requests.Session): Session object for doing HTTP calls.
+    """
+    meeting_title = row.find("a", {"aria-describedby": True}, target="_blank")
+    if meeting_title is None:
+        return
+    meeting_name = clean_name(meeting_title.text.strip().title())
+
+    date_header = row.find("td", class_=None)
+
+    minutes = row.find("td", class_="minutes")
+    minutes_link = minutes.find("a")
+
+    if not minutes_link:
+        return
+
+    minutes_url = f"{URL_BASE}{minutes_link.get('href')}"
+    minutes_name = minutes_url.split("/")[-1]
+
+    doc_id = minutes_name.split("-")[1]
+    year = minutes_name[5:9]
+    month = minutes_name[1:3]
+    day = minutes_name[3:5]
+
+    new_name = f"{year}_{month}_{day}_minutes_{doc_id}.pdf"
+
+    meeting_folder = MINUTES_FOLDER.joinpath(meeting_name)
+    meeting_folder.mkdir(exist_ok=True)
+
+    file_path = meeting_folder.joinpath(new_name)
+    if file_path.exists():
+        return
+
+    minutes_doc = session.get(minutes_url, headers={"User-Agent": USER_AGENT})
+    if not minutes_doc.ok:
+        print(
+            "Error retrieving minutes document:",
+            meeting_name,
+            minutes_name,
+            minutes_doc.reason,
+        )
+        return
+
+    print(date_header.strong.get_text() + " " + date_header.p.get_text().strip())
+
+    with open(file_path, "wb") as outfile:
+        outfile.write(minutes_doc.content)
+
+
 def get_minutes_docs():
     MINUTES_FOLDER.mkdir(exist_ok=True)
     session = requests.Session()
@@ -55,50 +134,20 @@ def get_minutes_docs():
     agenda_containers = soup.find_all("div", class_="listing listingCollapse noHeader")
     for container in agenda_containers:
         year_list = get_years(container)
-        agenda_table_id = re.sub(r'[a-zA-Z]', '', container.find('table', summary="List of Agendas").get('id'))
+        agenda_table_id = re.sub(
+            r"[a-zA-Z]",
+            "",
+            container.find("table", summary="List of Agendas").get("id"),
+        )
         for year in year_list:
-            payload = { 'year': year, 'catID': agenda_table_id }
-            agendas = session.post(URL_UPDATE_AGENDAS,\
-                    headers={"User-Agent": USER_AGENT}, \
-                    data=payload) 
-            new_doc = BeautifulSoup(agendas.text, 'html.parser')
+            payload = {"year": year, "catID": agenda_table_id}
+            agendas = session.post(
+                URL_UPDATE_AGENDAS, headers={"User-Agent": USER_AGENT}, data=payload
+            )
+            new_doc = BeautifulSoup(agendas.text, "html.parser")
             rows = new_doc.find_all("tr", class_="catAgendaRow")
             for row in rows:
-                meeting_title = row.find("a", {"aria-describedby": True}, target="_blank")
-                if meeting_title is None:
-                    continue
-                meeting_name = clean_name(meeting_title.text.strip().title())
-
-                date_header = row.find("td", class_=None)
-                print(date_header.strong.get_text() + " " + date_header.p.get_text().strip())
-
-                minutes = row.find("td", class_="minutes")
-                minutes_link = minutes.find("a")
-
-                if not minutes_link:
-                    continue
-
-                minutes_url = f"{URL_BASE}{minutes_link.get('href')}"
-                minutes_name = minutes_url.split("/")[-1]
-
-                doc_id = minutes_name.split("-")[1]
-                year = minutes_name[5:9]
-                month = minutes_name[1:3]
-                day = minutes_name[3:5]
-
-                new_name = f"{year}_{month}_{day}_minutes_{doc_id}.pdf"
-
-                meeting_folder = MINUTES_FOLDER.joinpath(meeting_name)
-                meeting_folder.mkdir(exist_ok=True)
-
-                minutes_doc = session.get(minutes_url, headers={"User-Agent": USER_AGENT})
-                if minutes_doc.ok:
-                    file_path = meeting_folder.joinpath(new_name)
-                    if file_path.exists():
-                        continue
-
-                    with open(file_path, "wb") as outfile:
-                        outfile.write(minutes_doc.content)
+                process_row_documents(row=row, session=session)
 
 
 if __name__ == "__main__":
