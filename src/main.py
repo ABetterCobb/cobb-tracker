@@ -3,25 +3,12 @@ import re
 
 import requests
 from bs4 import BeautifulSoup
-<<<<<<< HEAD
-
-headers = {'User-Agent': 'Mozilla/5.0'}
-values = {"year": "2015", "catID": "7"}
-session = requests.Session()
-response = session.post('https://www.mariettaga.gov/AgendaCenter', headers=headers, data=values)
-
-webpage = response.content
-soup = BeautifulSoup(webpage, 'html.parser')
-rows = soup.find(id="table7").tbody.find_all('tr')
-=======
-
 URL_BASE = "https://www.mariettaga.gov"
 URL_AGENDAS = f"{URL_BASE}/AgendaCenter"
 
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0"
 )
->>>>>>> main
 
 MINUTES_FOLDER = pathlib.Path(__file__).parent.joinpath("minutes")
 
