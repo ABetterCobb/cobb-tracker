@@ -4,6 +4,10 @@ import municipalities.marietta
 import municipalities.cobb
 
 def choose_muni(municipality: str):
+    """Chooses what module to run base on the municipality that is entered
+    Args:
+        municipality (str): Where are you?    
+    """
     muni = municipality.lower()
 
     if muni == "marietta":
