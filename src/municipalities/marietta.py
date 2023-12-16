@@ -49,7 +49,7 @@ def process_row_documents(row: Tag, session: requests.Session, container_name: s
 
     new_name = f"{year}_{month}_{day}_minutes_{doc_id}.pdf"
 
-    meeting_folder = MINUTES_FOLDER.joinpath(container_name, meeting_name)
+    meeting_folder = MINUTES_FOLDER.joinpath("Marietta", container_name, meeting_name)
     meeting_folder.mkdir(exist_ok=True, parents=True)
 
     file_path = meeting_folder.joinpath(new_name)
