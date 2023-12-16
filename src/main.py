@@ -68,7 +68,7 @@ def get_years(agenda_container: Tag) -> list[str]:
     return filtered_year_list
 
 
-def process_row_documents(row: Tag, session: requests.Session) -> None:
+def process_row_documents(row: Tag, session: requests.Session, container_name: str) -> None:
     """Parse meeting information and documents from a table row.
 
     Args:
@@ -98,8 +98,8 @@ def process_row_documents(row: Tag, session: requests.Session) -> None:
 
     new_name = f"{year}_{month}_{day}_minutes_{doc_id}.pdf"
 
-    meeting_folder = MINUTES_FOLDER.joinpath(meeting_name)
-    meeting_folder.mkdir(exist_ok=True)
+    meeting_folder = MINUTES_FOLDER.joinpath(container_name, meeting_name)
+    meeting_folder.mkdir(exist_ok=True, parents=True)
 
     file_path = meeting_folder.joinpath(new_name)
     if file_path.exists():
@@ -134,11 +134,13 @@ def get_minutes_docs():
     agenda_containers = soup.find_all("div", class_="listing listingCollapse noHeader")
     for container in agenda_containers:
         year_list = get_years(container)
+        container_name = (container.find("h2", tabindex="0").text).replace(' ','_')[1:]
         agenda_table_id = re.sub(
             r"[a-zA-Z]",
             "",
             container.find("table", summary="List of Agendas").get("id"),
         )
+
         for year in year_list:
             payload = {"year": year, "catID": agenda_table_id}
             agendas = session.post(
@@ -147,7 +149,7 @@ def get_minutes_docs():
             new_doc = BeautifulSoup(agendas.text, "html.parser")
             rows = new_doc.find_all("tr", class_="catAgendaRow")
             for row in rows:
-                process_row_documents(row=row, session=session)
+                process_row_documents(row=row, session=session, container_name=container_name)
 
 
 if __name__ == "__main__":
