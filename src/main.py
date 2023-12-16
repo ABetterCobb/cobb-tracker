@@ -8,7 +8,7 @@ def choose_muni(municipality: str):
 
     if muni == "marietta":
         municipalities.marietta.get_minutes_docs()
-    if muni == "cobb":
+    elif muni == "cobb":
         municipalities.cobb.get_minutes_docs()
 
 if __name__ == "__main__":
