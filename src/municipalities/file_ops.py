@@ -27,6 +27,7 @@ async def write_minutes_doc(
     pdf_path.mkdir(parents=True, exist_ok=True)
     meeting_type = meeting_type.lower()
     doc_name=f"{doc_date}-{meeting_type}.pdf"
+
     with open(pdf_path.joinpath(doc_name), "wb") as file:
         file.write(pdf_file)
         print(f"{doc_name} -> {pdf_path}/{doc_name}")
