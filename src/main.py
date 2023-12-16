@@ -2,6 +2,7 @@ import pathlib
 import re
 import sys
 
+import argparse
 import requests
 from bs4 import BeautifulSoup
 from bs4.element import Tag
@@ -153,4 +154,11 @@ def get_minutes_docs():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+            "-v",
+            "--municipality",
+            type=str
+            )
+    args = parser.parse_args()
     get_minutes_docs()
