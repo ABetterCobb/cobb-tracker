@@ -1,10 +1,9 @@
 import pathlib
 import sys
 import os
-import asyncio
 import requests
 
-async def write_minutes_doc(
+def write_minutes_doc(
             doc_date: str, 
             session: requests.Session,
             meeting_type: str,

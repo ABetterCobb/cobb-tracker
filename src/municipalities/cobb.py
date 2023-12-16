@@ -9,7 +9,6 @@ from datetime import datetime
 import pathlib
 import sys
 import os
-import asyncio
 
 BASE_URL = "https://cobbcoga.api.civicclerk.com/v1"
 EVENTS_URL = f"{BASE_URL}/Events/"
@@ -52,14 +51,12 @@ def get_minutes_docs():
             pdf_path = pathlib.Path(os.getcwd()).joinpath("minutes","Cobb",event_type)
             
             if file["type"] == "Minutes":
-                asyncio.run(
-                        municipalities.file_ops.write_minutes_doc(
-                        doc_date=event_date,
-                        meeting_type=file["type"],
-                        file_url=file_url,
-                        pdf_path=pdf_path,
-                        session=session,
-                        user_agent=USER_AGENT,
-                        municipality="Cobb"
-                    )
+                municipalities.file_ops.write_minutes_doc(
+                    doc_date=event_date,
+                    meeting_type=file["type"],
+                    file_url=file_url,
+                    pdf_path=pdf_path,
+                    session=session,
+                    user_agent=USER_AGENT,
+                    municipality="Cobb"
                 )
