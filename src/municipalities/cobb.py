@@ -16,6 +16,7 @@ EVENTS_URL = f"{BASE_URL}/Events/"
 MEETINGS_URL = f"{BASE_URL}/Meetings/"
 
 def get_all_events() -> dict:
+
     raw_event_page = json.loads(requests.get(EVENTS_URL).text)
     event_list = raw_event_page["value"]
     next_event_set_link = raw_event_page["@odata.nextLink"]
@@ -51,7 +52,7 @@ def get_minutes_docs():
                 asyncio.run(
                         municipalities.file_ops.write_minutes_doc(
                         doc_date=event_date,
-                        file_type=file["type"],
+                        meeting_type=file["type"],
                         file_url=file_url,
                         pdf_path=pdf_path,
                         municipality="Cobb"
