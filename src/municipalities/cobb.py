@@ -1,41 +1,59 @@
+import municipalities.file_ops
+
 import requests
 import json
+import re
+
 from datetime import datetime
-import municipalities.file_ops
 
 import pathlib
 import sys
 import os
+import asyncio
 
 BASE_URL = "https://cobbcoga.api.civicclerk.com/v1"
 EVENTS_URL = f"{BASE_URL}/Events/"
 MEETINGS_URL = f"{BASE_URL}/Meetings/"
 
-def get_minutes_docs():
-    event_list = json.loads(requests.get(EVENTS_URL).text)["value"]
+def get_all_events() -> dict:
+    raw_event_page = json.loads(requests.get(EVENTS_URL).text)
+    event_list = raw_event_page["value"]
+    next_event_set_link = raw_event_page["@odata.nextLink"]
 
-    for event in event_list:
-        event_type = event["categoryName"].replace(' ','_')
+    while True:
+        next_event_list = json.loads(requests.get(next_event_set_link).text)
+        event_list = event_list + next_event_list["value"] 
+        if "@odata.nextLink" in next_event_list.keys():
+            next_event_set_link = next_event_list["@odata.nextLink"]
+        else:
+            break
+    return event_list
+
+def get_minutes_docs():
+    
+    for event in get_all_events():
+        try:
+            event_type = event["categoryName"].lstrip().replace(' ','_')
+        except:
+            print("Error retrieving categoryName")
+            event_type = "misc"
+
         event_date = datetime.fromisoformat(
                 event["eventDate"]
                 ).strftime("%Y-%m-%d")
         print(event_type)
-
+            
         for file in event["publishedFiles"]:
             file_url = f"{MEETINGS_URL}GetMeetingFileStream(fileId={file['fileId']},plainText=false)"
-            file_contents = requests.get(file_url).content
-            print(file_url)
-            pdf_path = pathlib.Path(os.getcwd()).joinpath("minutes","Cobb",event_type,event_date,file["type"])
-
-            municipalities.file_ops.write_minutes_doc(
-                    doc_date=event_date,
-                    pdf_file=file_contents,
-                    pdf_path=pdf_path,
-                    municipality="Cobb"
+            pdf_path = pathlib.Path(os.getcwd()).joinpath("minutes","Cobb",event_type)
+            
+            if file["type"] == "Minutes":
+                asyncio.run(
+                        municipalities.file_ops.write_minutes_doc(
+                        doc_date=event_date,
+                        file_type=file["type"],
+                        file_url=file_url,
+                        pdf_path=pdf_path,
+                        municipality="Cobb"
+                    )
                 )
-
-            #pdf_path.mkdir(parents=True, exist_ok=True)
-
-            #with open(pdf_path.joinpath(f"{event_date}.pdf"), "wb") as file:
-            #    file.write(file_contents)
-            #print(json.dumps(file, indent=4))
