@@ -1,4 +1,4 @@
-import municipalities.file_ops
+from municipalities import file_ops
 
 import requests
 import json
@@ -51,7 +51,7 @@ def get_minutes_docs():
             pdf_path = pathlib.Path(os.getcwd()).joinpath("minutes","Cobb",event_type)
             
             if file["type"] == "Minutes":
-                municipalities.file_ops.write_minutes_doc(
+                file_ops.write_minutes_doc(
                     doc_date=event_date,
                     meeting_type=file["type"],
                     file_url=file_url,

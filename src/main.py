@@ -1,7 +1,7 @@
 import sys
 import argparse
-import municipalities.marietta
-import municipalities.cobb
+from municipalities import marietta
+from municipalities import cobb
 
 def choose_muni(municipality: str):
     """Chooses what module to run base on the municipality that is entered
@@ -11,9 +11,9 @@ def choose_muni(municipality: str):
     muni = municipality.lower()
 
     if muni == "marietta":
-        municipalities.marietta.get_minutes_docs()
+        marietta.get_minutes_docs()
     elif muni == "cobb":
-        municipalities.cobb.get_minutes_docs()
+        cobb.get_minutes_docs()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

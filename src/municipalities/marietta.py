@@ -2,7 +2,7 @@ import requests
 import pathlib
 import re
 import os
-import municipalities.file_ops
+from municipalities import file_ops
 
 from bs4.element import Tag
 from bs4 import BeautifulSoup
