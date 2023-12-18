@@ -25,3 +25,6 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/ABetterCobb/cobb-tracker"
 Issues = "https://github.com/ABetterCobb/cobb-tracker/issues"
+
+[project.scripts]
+cobb-tracker = "cobb_tracker.__main__:main"
