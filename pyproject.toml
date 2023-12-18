@@ -17,6 +17,10 @@ classifiers = [
     "License :: OSI Approved :: GPL3 License",
     "Operating System :: OS Independent",
 ]
+dependencies = [
+  "requests",
+  "beautifulsoup4",
+]
 
 [project.urls]
 Homepage = "https://github.com/ABetterCobb/cobb-tracker"
