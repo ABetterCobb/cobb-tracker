@@ -1,2 +1,7 @@
 requests
 beautifulsoup4
+Pillow
+PyMuPDF
+pytesseract
+sqlite-utils
+datasette

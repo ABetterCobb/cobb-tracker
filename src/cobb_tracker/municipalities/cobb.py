@@ -1,5 +1,5 @@
 from cobb_tracker.municipalities import file_ops
-
+from cobb_config import cobb_config
 import requests
 import json
 import re
@@ -34,7 +34,7 @@ def get_all_events(session: requests.Session) -> dict:
             break
     return event_list
 
-def get_minutes_docs():
+def get_minutes_docs(config: cobb_config):
     session = requests.Session()
     for event in get_all_events(session):
         try:
@@ -55,8 +55,8 @@ def get_minutes_docs():
                     doc_date=event_date,
                     meeting_type=file["type"],
                     file_url=file_url,
-                    pdf_path=pdf_path,
                     session=session,
                     user_agent=USER_AGENT,
-                    municipality="Cobb"
+                    municipality="Cobb",
+                    config=config
                 )

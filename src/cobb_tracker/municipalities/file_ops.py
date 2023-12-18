@@ -1,7 +1,8 @@
-import pathlib
+from pathlib import Path
 import sys
 import os
 import requests
+from cobb_config import cobb_config
 
 def write_minutes_doc(
             doc_date: str, 
@@ -9,8 +10,8 @@ def write_minutes_doc(
             meeting_type: str,
             user_agent: str,
             file_url: str,
-            pdf_path: pathlib.Path,
-            municipality: str
+            municipality: str,
+            config: cobb_config
         ):
     """Download and write minutes file for the specified meeting to disk
     
@@ -23,6 +24,11 @@ def write_minutes_doc(
     """
 
     pdf_file = requests.get(file_url, headers={"User-Agent": user_agent}).content
+    pdf_path = Path(
+                Path(config.get_config("directories", "minutes_dir"))
+                .joinpath(municipality,event_type)
+                )
+
     pdf_path.mkdir(parents=True, exist_ok=True)
     meeting_type = meeting_type.lower()
     doc_name=f"{doc_date}-{meeting_type}.pdf"
