@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cobb-tracker"
+version = "0.0.1"
+authors = [
+  { name="GuyLiner", email="guyliner69@proton.me" },
+  { name="Tyler", email="placeholder@example.com" }
+]
+description = "Program that pulls meeting minutes for the various municipalities in Cobb County"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GPL3 License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/ABetterCobb/cobb-tracker"
+Issues = "https://github.com/ABetterCobb/cobb-tracker/issues"
