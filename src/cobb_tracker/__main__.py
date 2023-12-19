@@ -16,7 +16,8 @@ def choose_muni(municipality: str, config: cobb_config):
         marietta.get_minutes_docs()
     elif muni == "cobb":
         cobb.get_minutes_docs(config=config)
-
+    else:
+        print("Municipality not recognized")
 def main():
     parser =  argparse.ArgumentParser()
     parser.add_argument(
@@ -31,7 +32,7 @@ def main():
             )
     args = parser.parse_args()
     if args.push_to_database is False and args.municipality is None:
-        print("You must specify -m/--municipality if -p/--push-to-database is not selected")
+        print("error: You must specify -m/--municipality if -p/--push-to-database is not selected")
         sys.exit()
 
     config = cobb_config()
