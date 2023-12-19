@@ -32,13 +32,13 @@ def write_minutes_doc(
                 Path(config.get_config("directories", "minutes_dir"))
                 .joinpath(municipality,meeting_type)
                 )
-    if not os.path.exists(pdf_path):
+    meeting_type = meeting_type.lower()
+    doc_name=f"{doc_date}-{file_type}.pdf"
+    doc_full_path=os.path.join(pdf_path,doc_name)
 
+    if not os.path.exists(doc_full_path):
         pdf_path.mkdir(parents=True, exist_ok=True)
-        meeting_type = meeting_type.lower()
-        doc_name=f"{doc_date}-{file_type}.pdf"
-
-        reponse = requests.get(file_url, headers={"User-Agent": user_agent})
+        response = requests.get(file_url, headers={"User-Agent": user_agent})
         if not response.ok:
             print(
                 "Error retrieving minutes document:",
@@ -46,7 +46,7 @@ def write_minutes_doc(
                     doc_name,
                     response.reason,
             )
-        return
+            return
         pdf_file = response.content
 
         with open(pdf_path.joinpath(doc_name), "wb") as file:
