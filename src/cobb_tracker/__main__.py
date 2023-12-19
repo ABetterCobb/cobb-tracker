@@ -2,8 +2,8 @@ import sys
 import argparse
 from cobb_tracker.municipalities import marietta
 from cobb_tracker.municipalities import cobb
-import pdf_parse
-from cobb_config import cobb_config
+from cobb_tracker.pdf_parse import pdf_to_database
+from cobb_tracker.cobb_config import cobb_config
 
 def choose_muni(municipality: str, config: cobb_config):
     """Chooses what module to run base on the municipality that is entered
@@ -18,6 +18,7 @@ def choose_muni(municipality: str, config: cobb_config):
         cobb.get_minutes_docs(config=config)
 
 def main():
+    parser =  argparse.ArgumentParser()
     parser.add_argument(
             "-m",
             "--municipality",
@@ -35,7 +36,7 @@ def main():
     choose_muni(args.municipality, config)
 
     if args.push_to_database:
-        pdf_parse.pdf_to_database(config)
+        pdf_to_database(config)
 
 if __name__ == "__main__":
     main()

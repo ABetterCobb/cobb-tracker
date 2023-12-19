@@ -14,9 +14,9 @@ from multiprocessing import Semaphore
 
 import re
 
-from municipalities.file_ops import write_minutes_doc
-from municipalities.file_ops import minutes_files
-from cobb_config import cobb_config
+from cobb_tracker.municipalities.file_ops import write_minutes_doc
+from cobb_tracker.municipalities.file_ops import minutes_files
+from cobb_tracker.cobb_config import cobb_config
 
 def pdf_to_database(config: cobb_config):
 

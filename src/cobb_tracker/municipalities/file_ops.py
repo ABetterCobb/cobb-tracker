@@ -2,7 +2,7 @@ from pathlib import Path
 import sys
 import os
 import requests
-from cobb_config import cobb_config
+from cobb_tracker.cobb_config import cobb_config
 
 def write_minutes_doc(
             doc_date: str, 

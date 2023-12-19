@@ -1,5 +1,5 @@
 from cobb_tracker.municipalities import file_ops
-from cobb_config import cobb_config
+from cobb_tracker.cobb_config import cobb_config
 import requests
 import json
 import re
