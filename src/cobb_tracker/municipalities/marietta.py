@@ -58,16 +58,6 @@ def process_row_documents(row: Tag, session: requests.Session, container_name: s
     file_path = meeting_folder.joinpath(new_name)
     if file_path.exists():
         return
-ii
-    minutes_doc = session.get(minutes_url, headers={"User-Agent": USER_AGENT})
-    if not minutes_doc.ok:
-        print(
-            "Error retrieving minutes document:",
-            meeting_name,
-            minutes_name,
-            minutes_doc.reason,
-        )
-        return
 
     file_ops.write_minutes_doc(
             doc_date=date,
@@ -79,8 +69,6 @@ ii
             file_type="minutes",
             config=config
             )
-    with open(file_path, "wb") as outfile:
-        outfile.write(minutes_doc.content)
 
 def get_years(agenda_container: Tag) -> list[str]:
     """Find all the list items that define which years are available to filter on.
