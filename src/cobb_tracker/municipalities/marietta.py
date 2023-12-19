@@ -3,6 +3,7 @@ import pathlib
 import re
 import os
 from cobb_tracker.municipalities import file_ops
+from cobb_tracker.cobb_config import cobb_config
 
 from bs4.element import Tag
 from bs4 import BeautifulSoup
@@ -20,7 +21,7 @@ MINUTES_FOLDER = pathlib.Path(os.getcwd()).joinpath("minutes")
 RE_ALPHNUM = re.compile(r"[^a-zA-Z0-9]")
 RE_ALPHA = re.compile(r"[0-9\.\-]")
 
-def process_row_documents(row: Tag, session: requests.Session, container_name: str) -> None:
+def process_row_documents(row: Tag, session: requests.Session, container_name: str, config: cobb_config) -> None:
     """Parse meeting information and documents from a table row.
 
     Args:
@@ -48,9 +49,10 @@ def process_row_documents(row: Tag, session: requests.Session, container_name: s
     month = minutes_name[1:3]
     day = minutes_name[3:5]
 
-    new_name = f"{year}_{month}_{day}_minutes_{doc_id}.pdf"
+    date=f"{year}-{month}-{day}"
+    new_name = f"{date}-minutes-{doc_id}.pdf"
 
-    meeting_folder = MINUTES_FOLDER.joinpath("Marietta", container_name, meeting_name)
+    meeting_folder = MINUTES_FOLDER.joinpath("Marietta", container_name)
     meeting_folder.mkdir(exist_ok=True, parents=True)
 
     file_path = meeting_folder.joinpath(new_name)
@@ -67,8 +69,18 @@ def process_row_documents(row: Tag, session: requests.Session, container_name: s
         )
         return
 
-    print(date_header.strong.get_text() + " " + date_header.p.get_text().strip())
+    #print(date_header.strong.get_text() + " " + date_header.p.get_text().strip())
 
+    file_ops.write_minutes_doc(
+            doc_date=date,
+            session=session,
+            meeting_type=meeting_name,
+            user_agent=USER_AGENT,
+            file_url=minutes_url,
+            municipality="Marietta",
+            file_type="minutes",
+            config=config
+            )
     with open(file_path, "wb") as outfile:
         outfile.write(minutes_doc.content)
 
@@ -89,7 +101,7 @@ def get_years(agenda_container: Tag) -> list[str]:
             filtered_year_list.append(entry_string)
     return filtered_year_list
 
-def get_minutes_docs():
+def get_minutes_docs(config: cobb_config):
     MINUTES_FOLDER.mkdir(exist_ok=True)
     session = requests.Session()
 
@@ -117,7 +129,7 @@ def get_minutes_docs():
             new_doc = BeautifulSoup(agendas.text, "html.parser")
             rows = new_doc.find_all("tr", class_="catAgendaRow")
             for row in rows:
-                process_row_documents(row=row, session=session, container_name=container_name)
+                process_row_documents(row=row, session=session, container_name=container_name, config=config)
 
 def clean_name(input_string: str) -> str:
     """Use regex to replace non-alphanumeric characters with underscores

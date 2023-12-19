@@ -13,7 +13,7 @@ def choose_muni(municipality: str, config: cobb_config):
     muni = municipality.lower()
 
     if muni == "marietta":
-        marietta.get_minutes_docs()
+        marietta.get_minutes_docs(config=config)
     elif muni == "cobb":
         cobb.get_minutes_docs(config=config)
     else:

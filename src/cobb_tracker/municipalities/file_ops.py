@@ -3,6 +3,7 @@ import sys
 import os
 import requests
 from cobb_tracker.cobb_config import cobb_config
+from multiprocessing import process
 
 def write_minutes_doc(
             doc_date: str, 
@@ -11,7 +12,7 @@ def write_minutes_doc(
             user_agent: str,
             file_url: str,
             municipality: str,
-            event_type: str,
+            file_type: str,
             config: cobb_config
         ):
     """Download and write minutes file for the specified meeting to disk
@@ -27,12 +28,12 @@ def write_minutes_doc(
     pdf_file = requests.get(file_url, headers={"User-Agent": user_agent}).content
     pdf_path = Path(
                 Path(config.get_config("directories", "minutes_dir"))
-                .joinpath(municipality,event_type)
+                .joinpath(municipality,meeting_type)
                 )
 
     pdf_path.mkdir(parents=True, exist_ok=True)
     meeting_type = meeting_type.lower()
-    doc_name=f"{doc_date}-{meeting_type}.pdf"
+    doc_name=f"{doc_date}-{file_type}.pdf"
 
     with open(pdf_path.joinpath(doc_name), "wb") as file:
         file.write(pdf_file)
