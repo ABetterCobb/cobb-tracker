@@ -23,7 +23,6 @@ def main():
             "-m",
             "--municipality",
             type=str,
-            required=True
             )
     parser.add_argument(
             "-p",
@@ -31,9 +30,13 @@ def main():
             action="store_true",
             )
     args = parser.parse_args()
+    if args.push_to_database is False and args.municipality is None:
+        print("You must specify -m/--municipality if -p/--push-to-database is not selected")
+        sys.exit()
+
     config = cobb_config()
-    print(config.get_config("directories","minutes_dir"))
-    choose_muni(args.municipality, config)
+    if args.municipality is not None:
+        choose_muni(args.municipality, config)
 
     if args.push_to_database:
         pdf_to_database(config)
