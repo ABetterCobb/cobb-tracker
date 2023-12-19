@@ -19,10 +19,15 @@ def write_minutes_doc(
     
     Args:
         doc_date (str): The date the event took place in the format YYYY-MM-D   
+        session (requests.Session): requests session object
+
         meeting_type (str): What type of meeting was this?
+        user_agent (str): User agent for requests session object
         file_url (str): Where is this file located?
-        pdf_path (pathlib.Path): Where do you want this file to be written to?
+
         municipality (str): This will either be Cobb County or one of it's cities.
+        file_type (str): Is this an agenda or minute file?
+        config (cobb_config): cobb_config object to get user specific config
     """
 
     pdf_file = requests.get(file_url, headers={"User-Agent": user_agent}).content
