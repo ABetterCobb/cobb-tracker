@@ -16,12 +16,14 @@ USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0"
 )
 
-MINUTES_FOLDER = pathlib.Path(os.getcwd()).joinpath("minutes")
-
 RE_ALPHNUM = re.compile(r"[^a-zA-Z0-9]")
 RE_ALPHA = re.compile(r"[0-9\.\-]")
 
-def process_row_documents(row: Tag, session: requests.Session, container_name: str, config: cobb_config) -> None:
+def process_row_documents(row: Tag,
+                          session: requests.Session,
+                          container_name: str,
+                          config: cobb_config,
+                          minutes_url: str) -> None:
     """Parse meeting information and documents from a table row.
 
     Args:
@@ -35,13 +37,6 @@ def process_row_documents(row: Tag, session: requests.Session, container_name: s
 
     date_header = row.find("td", class_=None)
 
-    minutes = row.find("td", class_="minutes")
-    minutes_link = minutes.find("a")
-
-    if not minutes_link:
-        return
-
-    minutes_url = f"{URL_BASE}{minutes_link.get('href')}"
     minutes_name = minutes_url.split("/")[-1]
 
     doc_id = minutes_name.split("-")[1]
@@ -51,13 +46,6 @@ def process_row_documents(row: Tag, session: requests.Session, container_name: s
 
     date=f"{year}-{month}-{day}"
     new_name = f"{date}-minutes-{doc_id}.pdf"
-
-    meeting_folder = MINUTES_FOLDER.joinpath("Marietta", container_name)
-    meeting_folder.mkdir(exist_ok=True, parents=True)
-
-    file_path = meeting_folder.joinpath(new_name)
-    if file_path.exists():
-        return
 
     file_ops.write_minutes_doc(
             doc_date=date,
@@ -88,7 +76,7 @@ def get_years(agenda_container: Tag) -> list[str]:
     return filtered_year_list
 
 def get_minutes_docs(config: cobb_config):
-    MINUTES_FOLDER.mkdir(exist_ok=True)
+    minutes_urls = {}
     session = requests.Session()
 
     response = session.get(URL_AGENDAS, headers={"User-Agent": USER_AGENT})
@@ -115,7 +103,20 @@ def get_minutes_docs(config: cobb_config):
             new_doc = BeautifulSoup(agendas.text, "html.parser")
             rows = new_doc.find_all("tr", class_="catAgendaRow")
             for row in rows:
-                process_row_documents(row=row, session=session, container_name=container_name, config=config)
+                minutes = row.find("td", class_="minutes")
+                minutes_link = minutes.find("a")
+                if minutes_link:
+                    minutes_url = f"{URL_BASE}{minutes_link.get('href')}"
+                    minutes_urls[minutes_url] = row
+
+    for url in minutes_urls.keys():
+        row = minutes_urls[url]
+        process_row_documents(
+                row=row,
+                session=session,
+                container_name=container_name,
+                config=config,
+                minutes_url=url)
 
 def clean_name(input_string: str) -> str:
     """Use regex to replace non-alphanumeric characters with underscores
