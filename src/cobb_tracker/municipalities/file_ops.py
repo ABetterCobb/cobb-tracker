@@ -11,6 +11,7 @@ def write_minutes_doc(
             user_agent: str,
             file_url: str,
             municipality: str,
+            event_type: str,
             config: cobb_config
         ):
     """Download and write minutes file for the specified meeting to disk
@@ -36,3 +37,14 @@ def write_minutes_doc(
     with open(pdf_path.joinpath(doc_name), "wb") as file:
         file.write(pdf_file)
         print(f"{doc_name} -> {pdf_path}/{doc_name}")
+
+def minutes_files(minutes_dir: str) -> list:
+    all_files = []
+    def list_all_files(minutes_dir: str):
+        for entry in os.scandir(minutes_dir):
+            if entry.is_file():
+                all_files.append(entry.path)
+            if entry.is_dir():
+                list_all_files(entry)
+    list_all_files(minutes_dir)
+    return all_files

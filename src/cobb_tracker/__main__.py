@@ -35,10 +35,7 @@ def main():
     choose_muni(args.municipality, config)
 
     if args.push_to_database:
-        pdf_parse.write_to_database(
-                minutes_dir=config.get_config("directories","minutes_dir"),
-                database_dir=config.get_config("directories","database_dir")
-                )
+        pdf_parse.pdf_to_database(config)
 
 if __name__ == "__main__":
     main()

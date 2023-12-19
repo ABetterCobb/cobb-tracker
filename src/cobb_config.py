@@ -21,9 +21,12 @@ class cobb_config():
                 'minutes_dir': f"{os.path.join(self.DEFAULT_CONFIG_DIR, 'minutes')}"
                 }
 
+        if not os.path.exists(self.config['directories']['database_dir']):
+            os.mkdir(self.config['directories']['database_dir'])
+
         if not os.path.exists(self.DEFAULT_CONFIG_FILE):
             with open(os.path.join(self.DEFAULT_CONFIG_DIR, "config.ini"), 'w') as config_file:
                 config.write(config_file)
 
-    def get_config(self,section,key) -> str:
+    def get_config(self, section: str, key: str) -> str:
         return self.config[section][key]

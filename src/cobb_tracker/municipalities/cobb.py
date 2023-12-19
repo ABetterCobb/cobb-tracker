@@ -54,6 +54,7 @@ def get_minutes_docs(config: cobb_config):
                 file_ops.write_minutes_doc(
                     doc_date=event_date,
                     meeting_type=file["type"],
+                    event_type=event_type,
                     file_url=file_url,
                     session=session,
                     user_agent=USER_AGENT,
