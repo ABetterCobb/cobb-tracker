@@ -58,7 +58,7 @@ def process_row_documents(row: Tag, session: requests.Session, container_name: s
     file_path = meeting_folder.joinpath(new_name)
     if file_path.exists():
         return
-
+ii
     minutes_doc = session.get(minutes_url, headers={"User-Agent": USER_AGENT})
     if not minutes_doc.ok:
         print(
@@ -68,8 +68,6 @@ def process_row_documents(row: Tag, session: requests.Session, container_name: s
             minutes_doc.reason,
         )
         return
-
-    #print(date_header.strong.get_text() + " " + date_header.p.get_text().strip())
 
     file_ops.write_minutes_doc(
             doc_date=date,
