@@ -12,7 +12,6 @@ civic-scraper==0.2.7
 click==8.1.7
 click-default-group==1.2.4
 click-option-group==0.5.6
--e git+ssh://git@github.com/GuyLiner/cobb-scrape.git@2d82c8b971a39f54a75a14f3caf207c4c8f1c512#egg=cobb_tracker
 cryptography==41.0.7
 datasette==0.64.5
 demjson3==3.0.6
