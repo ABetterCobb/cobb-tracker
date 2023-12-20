@@ -14,14 +14,14 @@ from multiprocessing import Semaphore
 
 import re
 
-from cobb_tracker.municipalities.file_ops import write_minutes_doc
-from cobb_tracker.municipalities.file_ops import minutes_files
+from cobb_tracker.municipalities.file_ops import file_ops
 from cobb_tracker.cobb_config import cobb_config
 
 def pdf_to_database(config: cobb_config):
 
     DATABASE_DIR=config.get_config("directories","database_dir")
     DB = Database(os.path.join(DATABASE_DIR,"minutes.db"))
+    doc_ops = file_ops.file_ops
     all_minutes_files = minutes_files(
         minutes_dir=config.get_config("directories","minutes_dir")
     )

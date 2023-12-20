@@ -2,8 +2,12 @@ import requests
 import pathlib
 import re
 import os
+
 from cobb_tracker.municipalities import file_ops
 from cobb_tracker.cobb_config import cobb_config
+
+from threading import Thread
+from threading import BoundedSemaphore
 
 from bs4.element import Tag
 from bs4 import BeautifulSoup
@@ -19,45 +23,46 @@ USER_AGENT = (
 RE_ALPHNUM = re.compile(r"[^a-zA-Z0-9]")
 RE_ALPHA = re.compile(r"[0-9\.\-]")
 
-def process_row_documents(row: Tag,
-                          session: requests.Session,
+def name_documents(session: requests.Session,
                           container_name: str,
                           config: cobb_config,
-                          minutes_url: str) -> None:
+                          minutes_urls: dict) -> None:
     """Parse meeting information and documents from a table row.
 
     Args:
         row (Tag): Row from a Marietta meeting list table.
         session (requests.Session): Session object for doing HTTP calls.
     """
-    meeting_title = row.find("a", {"aria-describedby": True}, target="_blank")
-    if meeting_title is None:
-        return
-    meeting_name = clean_name(meeting_title.text.strip().title())
+    for url in minutes_urls.keys():
+        row = minutes_urls[url]
+        meeting_title = row.find("a", {"aria-describedby": True}, target="_blank")
+        if meeting_title is None:
+            return
+        minutes_urls[url]["meeting_name"] = clean_name(meeting_title.text.strip().title())
+        minutes_urls[url]["municipality"] = "Marietta" 
+        minutes_urls[url]["file_type"] = "minutes"
+        date_header = row.find("td", class_=None)
+        
+        minutes_name = url.split("/")[-1]
 
-    date_header = row.find("td", class_=None)
+        doc_id = minutes_name.split("-")[1]
+        year = minutes_name[5:9]
+        month = minutes_name[1:3]
+        day = minutes_name[3:5]
 
-    minutes_name = minutes_url.split("/")[-1]
+        minutes_urls[url]["date"]=f"{year}-{month}-{day}"
+        #new_name = f"{date}-minutes-{doc_id}.pdf"
 
-    doc_id = minutes_name.split("-")[1]
-    year = minutes_name[5:9]
-    month = minutes_name[1:3]
-    day = minutes_name[3:5]
 
-    date=f"{year}-{month}-{day}"
-    new_name = f"{date}-minutes-{doc_id}.pdf"
-
-    file_ops.write_minutes_doc(
-            doc_date=date,
-            session=session,
-            meeting_type=meeting_name,
-            user_agent=USER_AGENT,
-            file_url=minutes_url,
-            municipality="Marietta",
-            file_type="minutes",
-            config=config
-            )
-
+    doc_ops = file_ops.file_ops(
+        #doc_date=date,
+        session=session,
+        #meeting_type=meeting_name,
+        user_agent=USER_AGENT,
+        file_urls=minutes_urls,
+        config=config
+        )
+    doc_ops.write_minutes_doc()
 def get_years(agenda_container: Tag) -> list[str]:
     """Find all the list items that define which years are available to filter on.
 
@@ -109,14 +114,12 @@ def get_minutes_docs(config: cobb_config):
                     minutes_url = f"{URL_BASE}{minutes_link.get('href')}"
                     minutes_urls[minutes_url] = row
 
-    for url in minutes_urls.keys():
-        row = minutes_urls[url]
-        process_row_documents(
-                row=row,
-                session=session,
-                container_name=container_name,
-                config=config,
-                minutes_url=url)
+    name_documents(
+        minutes_urls=minutes_urls,
+        session=session,
+        container_name=container_name,
+        config=config,
+        )
 
 def clean_name(input_string: str) -> str:
     """Use regex to replace non-alphanumeric characters with underscores
