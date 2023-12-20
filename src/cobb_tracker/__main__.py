@@ -19,6 +19,9 @@ def choose_muni(municipality: str, config: cobb_config):
     else:
         print("Municipality not recognized")
 def main():
+    if os.name != "posix":
+        print("Error: cobb-tracker will only work Unix-like systems")
+        sys.exit()
     parser =  argparse.ArgumentParser()
     parser.add_argument(
             "-m",
