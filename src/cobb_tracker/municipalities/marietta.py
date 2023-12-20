@@ -51,18 +51,16 @@ def name_documents(session: requests.Session,
         day = minutes_name[3:5]
 
         minutes_urls[url]["date"]=f"{year}-{month}-{day}"
-        #new_name = f"{date}-minutes-{doc_id}.pdf"
 
 
     doc_ops = file_ops.file_ops(
-        #doc_date=date,
         session=session,
-        #meeting_type=meeting_name,
         user_agent=USER_AGENT,
         file_urls=minutes_urls,
         config=config
         )
     doc_ops.write_minutes_doc()
+
 def get_years(agenda_container: Tag) -> list[str]:
     """Find all the list items that define which years are available to filter on.
 
