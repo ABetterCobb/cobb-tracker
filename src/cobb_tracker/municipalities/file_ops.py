@@ -2,9 +2,8 @@ from pathlib import Path
 import sys
 import os
 import requests
+import concurrent.futures
 from cobb_tracker.cobb_config import cobb_config
-from threading import BoundedSemaphore
-from threading import Thread
 
 class file_ops():
     def __init__(self,
@@ -21,59 +20,54 @@ class file_ops():
             config (cobb_config): cobb_config object to get user specific config
         """
         self.maxconnections = 15
-        self.pool_sema = BoundedSemaphore(value=self.maxconnections)
-
         self.session = session
         self.user_agent = user_agent
         self.file_urls = file_urls
         self.config = config
 
     def write_minutes_doc(self):
-        url_threads = [Thread(target=self.pull_minutes_doc, args=(url,)) for url in self.file_urls]
-
-        for thread in url_threads:
-            thread.start()
-        for thread in url_threads:
-            thread.join()
-
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.maxconnections) as executor:
+            # Start the load operations and mark each future with its URL
+            future_to_url = {executor.submit(self.pull_minutes_doc, url): url for url in self.file_urls}
+            for _ in concurrent.futures.as_completed(future_to_url):
+                pass
 
     def pull_minutes_doc(self, url: str):
-        with self.pool_sema:
-            url = ''.join(map(str, url))
-            municipality = self.file_urls[url]["municipality"]
-            meeting_type = self.file_urls[url]["meeting_name"]
-            file_url = url
-            doc_date = self.file_urls[url]["date"]
-            file_type = self.file_urls[url]["file_type"]
-            pdf_path = Path(
-                        Path(self.config.get_config("directories", "minutes_dir"))
-                        .joinpath(municipality,meeting_type)
-                        )
-            #normalize
-            meeting_type = meeting_type.lower()
-
-            doc_name=f"{doc_date}-{file_type}.pdf"
-            doc_full_path=os.path.join(pdf_path,doc_name)
-
-            if not os.path.exists(doc_full_path):
-                pdf_path.mkdir(parents=True, exist_ok=True)
-                response = requests.get(file_url, headers={"User-Agent": self.user_agent})
-
-                if not response.ok:
-                    print(
-                        "Error retrieving minutes document:",
-                            meeting_type,
-                            doc_name,
-                            response.reason,
+        url = ''.join(map(str, url))
+        municipality = self.file_urls[url]["municipality"]
+        meeting_type = self.file_urls[url]["meeting_name"]
+        file_url = url
+        doc_date = self.file_urls[url]["date"]
+        file_type = self.file_urls[url]["file_type"]
+        pdf_path = Path(
+                    Path(self.config.get_config("directories", "minutes_dir"))
+                    .joinpath(municipality,meeting_type)
                     )
-                    return
-                pdf_file = response.content
+        #normalize
+        meeting_type = meeting_type.lower()
 
-                with open(pdf_path.joinpath(doc_name), "wb") as file:
-                    file.write(pdf_file)
-                    print(f"{doc_name} -> {pdf_path}/{doc_name}")
-            else:
+        doc_name=f"{doc_date}-{file_type}.pdf"
+        doc_full_path=os.path.join(pdf_path,doc_name)
+
+        if not os.path.exists(doc_full_path):
+            pdf_path.mkdir(parents=True, exist_ok=True)
+            response = requests.get(file_url, headers={"User-Agent": self.user_agent})
+
+            if not response.ok:
+                print(
+                    "Error retrieving minutes document:",
+                        meeting_type,
+                        doc_name,
+                        response.reason,
+                )
                 return
+            pdf_file = response.content
+
+            with open(pdf_path.joinpath(doc_name), "wb") as file:
+                file.write(pdf_file)
+                print(f"{doc_name} -> {pdf_path}/{doc_name}")
+        else:
+            return
 
 class file_list():        
     def __init__(self, minutes_dir: str) -> list:
