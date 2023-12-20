@@ -73,7 +73,7 @@ class file_ops():
                     file.write(pdf_file)
                     print(f"{doc_name} -> {pdf_path}/{doc_name}")
             else:
-                print("File exists")
+                return
 
 class file_list():        
     def __init__(self, minutes_dir: str) -> list:
