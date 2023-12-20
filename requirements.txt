@@ -38,6 +38,7 @@ mdurl==0.1.2
 mergedeep==1.3.4
 more-itertools==10.1.0
 nh3==0.2.15
+numpy==1.26.2
 packaging==23.2
 Pillow==10.1.0
 Pint==0.23
