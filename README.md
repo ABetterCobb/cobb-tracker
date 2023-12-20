@@ -1,6 +1,8 @@
 # Cobb Tracker
 
-Tool that pulls meeting minutes for the local governments in Cobb County
+Tool that pulls meeting minutes for the local governments in Cobb County.
+
+Currently this tool will only work on Unix-like systems. 
 
 ```
 usage: main.py [-h] -m MUNICIPALITY
