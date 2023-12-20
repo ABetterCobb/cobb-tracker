@@ -49,7 +49,6 @@ def get_minutes_docs(config: cobb_config):
                 ).strftime("%Y-%m-%d")
         for file in event["publishedFiles"]:
             file_url = f"{MEETINGS_URL}GetMeetingFileStream(fileId={file['fileId']},plainText=false)"
-            #pdf_path = pathlib.Path(os.getcwd()).joinpath("minutes","Cobb",event_type)
     
             if file["type"] == "Minutes":
                 minutes_urls[file_url] = {}

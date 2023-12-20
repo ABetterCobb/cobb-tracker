@@ -13,18 +13,11 @@ class file_ops():
                 file_urls: dict,
                 config: cobb_config
                 ):
-        """Download and write minutes file for the specified meeting to disk
-        
+        """
         Args:
-            doc_date (str): The date the event took place in the format YYYY-MM-D   
             session (requests.Session): requests session object
-
-            meeting_type (str): What type of meeting was this?
             user_agent (str): User agent for requests session object
             file_url (str): Where is this file located?
-
-            municipality (str): This will either be Cobb County or one of it's cities.
-            file_type (str): Is this an agenda or minute file?
             config (cobb_config): cobb_config object to get user specific config
         """
         self.maxconnections = 15
@@ -65,6 +58,7 @@ class file_ops():
             if not os.path.exists(doc_full_path):
                 pdf_path.mkdir(parents=True, exist_ok=True)
                 response = requests.get(file_url, headers={"User-Agent": self.user_agent})
+
                 if not response.ok:
                     print(
                         "Error retrieving minutes document:",
@@ -84,6 +78,7 @@ class file_ops():
 class file_list():        
     def __init__(self, minutes_dir: str) -> list:
         self.minutes_dir = minutes_dir 
+
     def minutes_files(self):
         all_files = []
         def list_all_files(path: str):
