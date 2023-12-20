@@ -80,14 +80,17 @@ class file_ops():
                     print(f"{doc_name} -> {pdf_path}/{doc_name}")
             else:
                 print("File exists")
-class file_get():        
+
+class file_list():        
     def __init__(self, minutes_dir: str) -> list:
+        self.minutes_dir = minutes_dir 
+    def minutes_files(self):
         all_files = []
-        def list_all_files(minutes_dir: str):
-            for entry in os.scandir(minutes_dir):
+        def list_all_files(path: str):
+            for entry in os.scandir(path):
                 if entry.is_file():
                     all_files.append(entry.path)
                 if entry.is_dir():
                     list_all_files(entry)
-        list_all_files(minutes_dir)
+        list_all_files(self.minutes_dir)
         return all_files
