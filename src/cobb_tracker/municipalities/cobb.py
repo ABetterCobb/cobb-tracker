@@ -35,6 +35,7 @@ def get_all_events(session: requests.Session) -> dict:
     return event_list
 
 def get_minutes_docs(config: cobb_config):
+    minutes_urls = {}
     session = requests.Session()
     for event in get_all_events(session):
         try:
@@ -48,16 +49,20 @@ def get_minutes_docs(config: cobb_config):
                 ).strftime("%Y-%m-%d")
         for file in event["publishedFiles"]:
             file_url = f"{MEETINGS_URL}GetMeetingFileStream(fileId={file['fileId']},plainText=false)"
-            pdf_path = pathlib.Path(os.getcwd()).joinpath("minutes","Cobb",event_type)
-            
+            #pdf_path = pathlib.Path(os.getcwd()).joinpath("minutes","Cobb",event_type)
+    
             if file["type"] == "Minutes":
-                file_ops.write_minutes_doc(
-                    doc_date=event_date,
-                    meeting_type=file["type"],
-                    file_type=file_type,
-                    file_url=file_url,
-                    session=session,
-                    user_agent=USER_AGENT,
-                    municipality="Cobb",
-                    config=config
-                )
+                minutes_urls[file_url] = {}
+                minutes_urls[file_url]["municipality"] = "Cobb"
+                minutes_urls[file_url]["meeting_name"] = event_type 
+                minutes_urls[file_url]["date"] = event_date 
+                minutes_urls[file_url]["file_type"] = "minutes" 
+
+
+    doc_ops = file_ops.file_ops(
+        file_urls=minutes_urls,
+        session=session,
+        user_agent=USER_AGENT,
+        config=config
+       )
+    doc_ops.write_minutes_doc()
