@@ -2,7 +2,7 @@ import sys
 import argparse
 from cobb_tracker.municipalities import marietta
 from cobb_tracker.municipalities import cobb
-from cobb_tracker.pdf_parse import pdf_to_database
+from cobb_tracker.pdf_parse import database_ops
 from cobb_tracker.cobb_config import cobb_config
 
 def choose_muni(municipality: str, config: cobb_config):
@@ -40,7 +40,8 @@ def main():
         choose_muni(args.municipality, config)
 
     if args.push_to_database:
-        pdf_to_database(config)
+        pdf_to_db = database_ops(config)
+        pdf_to_db.pdf_to_database()
 
 if __name__ == "__main__":
     main()
