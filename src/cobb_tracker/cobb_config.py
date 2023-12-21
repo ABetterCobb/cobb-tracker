@@ -9,30 +9,29 @@ class CobbConfig():
             config_dir = Path.home().joinpath(".config","cobb_tracker"),
             data_dir = Path.home().joinpath(".local","share")
             ):
-        self.DEFAULT_CONFIG_DIR=config_dir
-        self.DEFAULT_DATA_DIR=data_dir
+        self.DEFAULT_CONFIG_DIR = Path(config_dir)
+        self.DEFAULT_DATA_DIR = Path(data_dir)
         self.DEFAULT_CONFIG_FILE = Path(f"{self.DEFAULT_CONFIG_DIR}").joinpath("config.ini")
         self.DEFAULT_DATABASE_DIR = Path(self.DEFAULT_DATA_DIR).joinpath('db')
         self.DEFAULT_MINUTES_DIR = Path(self.DEFAULT_DATA_DIR).joinpath('minutes')
 
         self.config = configparser.ConfigParser()
 
-        if not Path.exists(self.DEFAULT_CONFIG_DIR):
-            Path.mkdir(self.DEFAULT_CONFIG_DIR)
+        self.DEFAULT_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
-        if not Path.exists(self.DEFAULT_CONFIG_FILE):
+        if not self.DEFAULT_CONFIG_FILE.exists():
             self.config['directories'] = {
                 'database_dir': f"{self.DEFAULT_DATABASE_DIR}",
                 'minutes_dir': f"{self.DEFAULT_MINUTES_DIR}"
                 }
 
-            if not Path.exists(Path(self.config['directories']['database_dir'])):
+            if not Path(self.config['directories']['database_dir']).exists():
                 Path.mkdir(self.config['directories']['database_dir'])
 
             with open(Path(self.DEFAULT_CONFIG_DIR).joinpath("config.ini"), 'w') as config_file:
                 self.config.write(config_file)
 
-        elif Path.exists(self.DEFAULT_CONFIG_FILE):
+        elif self.DEFAULT_CONFIG_FILE.exists():
             self.config.read(self.DEFAULT_CONFIG_FILE) 
             if len(self.config.sections()) == 0:
                 print("Error: Configuration file incorrect")
