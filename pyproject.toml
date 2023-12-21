@@ -18,6 +18,8 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
+  "PyMuPDF",
+  "sqlite_utils",
   "requests",
   "beautifulsoup4",
   "numpy",
