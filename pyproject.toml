@@ -23,6 +23,7 @@ dependencies = [
   "numpy",
   "Pillow",
   "pytesseract",
+  "datasette",
 ]
 
 [project.urls]
