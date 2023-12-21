@@ -20,6 +20,9 @@ classifiers = [
 dependencies = [
   "requests",
   "beautifulsoup4",
+  "numpy",
+  "Pillow",
+  "pytesseract",
 ]
 
 [project.urls]

@@ -2,7 +2,12 @@ import requests
 import pathlib
 import re
 import os
+
 from cobb_tracker.municipalities import file_ops
+from cobb_tracker.cobb_config import CobbConfig
+
+from threading import Thread
+from threading import BoundedSemaphore
 
 from bs4.element import Tag
 from bs4 import BeautifulSoup
@@ -15,62 +20,46 @@ USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0"
 )
 
-MINUTES_FOLDER = pathlib.Path(os.getcwd()).joinpath("minutes")
-
 RE_ALPHNUM = re.compile(r"[^a-zA-Z0-9]")
 RE_ALPHA = re.compile(r"[0-9\.\-]")
 
-def process_row_documents(row: Tag, session: requests.Session, container_name: str) -> None:
+def name_documents(session: requests.Session,
+                          container_name: str,
+                          config: CobbConfig,
+                          minutes_urls: dict) -> None:
     """Parse meeting information and documents from a table row.
 
     Args:
         row (Tag): Row from a Marietta meeting list table.
         session (requests.Session): Session object for doing HTTP calls.
     """
-    meeting_title = row.find("a", {"aria-describedby": True}, target="_blank")
-    if meeting_title is None:
-        return
-    meeting_name = clean_name(meeting_title.text.strip().title())
+    for url in minutes_urls.keys():
+        row = minutes_urls[url]
+        meeting_title = row.find("a", {"aria-describedby": True}, target="_blank")
+        if meeting_title is None:
+            return
+        minutes_urls[url]["meeting_name"] = clean_name(meeting_title.text.strip().title())
+        minutes_urls[url]["municipality"] = "Marietta" 
+        minutes_urls[url]["file_type"] = "minutes"
+        date_header = row.find("td", class_=None)
+        
+        minutes_name = url.split("/")[-1]
 
-    date_header = row.find("td", class_=None)
+        doc_id = minutes_name.split("-")[1]
+        year = minutes_name[5:9]
+        month = minutes_name[1:3]
+        day = minutes_name[3:5]
 
-    minutes = row.find("td", class_="minutes")
-    minutes_link = minutes.find("a")
+        minutes_urls[url]["date"]=f"{year}-{month}-{day}"
 
-    if not minutes_link:
-        return
 
-    minutes_url = f"{URL_BASE}{minutes_link.get('href')}"
-    minutes_name = minutes_url.split("/")[-1]
-
-    doc_id = minutes_name.split("-")[1]
-    year = minutes_name[5:9]
-    month = minutes_name[1:3]
-    day = minutes_name[3:5]
-
-    new_name = f"{year}_{month}_{day}_minutes_{doc_id}.pdf"
-
-    meeting_folder = MINUTES_FOLDER.joinpath("Marietta", container_name, meeting_name)
-    meeting_folder.mkdir(exist_ok=True, parents=True)
-
-    file_path = meeting_folder.joinpath(new_name)
-    if file_path.exists():
-        return
-
-    minutes_doc = session.get(minutes_url, headers={"User-Agent": USER_AGENT})
-    if not minutes_doc.ok:
-        print(
-            "Error retrieving minutes document:",
-            meeting_name,
-            minutes_name,
-            minutes_doc.reason,
+    doc_ops = file_ops.FileOps(
+        session=session,
+        user_agent=USER_AGENT,
+        file_urls=minutes_urls,
+        config=config
         )
-        return
-
-    print(date_header.strong.get_text() + " " + date_header.p.get_text().strip())
-
-    with open(file_path, "wb") as outfile:
-        outfile.write(minutes_doc.content)
+    doc_ops.write_minutes_doc()
 
 def get_years(agenda_container: Tag) -> list[str]:
     """Find all the list items that define which years are available to filter on.
@@ -89,8 +78,8 @@ def get_years(agenda_container: Tag) -> list[str]:
             filtered_year_list.append(entry_string)
     return filtered_year_list
 
-def get_minutes_docs():
-    MINUTES_FOLDER.mkdir(exist_ok=True)
+def get_minutes_docs(config: CobbConfig):
+    minutes_urls = {}
     session = requests.Session()
 
     response = session.get(URL_AGENDAS, headers={"User-Agent": USER_AGENT})
@@ -117,7 +106,18 @@ def get_minutes_docs():
             new_doc = BeautifulSoup(agendas.text, "html.parser")
             rows = new_doc.find_all("tr", class_="catAgendaRow")
             for row in rows:
-                process_row_documents(row=row, session=session, container_name=container_name)
+                minutes = row.find("td", class_="minutes")
+                minutes_link = minutes.find("a")
+                if minutes_link:
+                    minutes_url = f"{URL_BASE}{minutes_link.get('href')}"
+                    minutes_urls[minutes_url] = row
+
+    name_documents(
+        minutes_urls=minutes_urls,
+        session=session,
+        container_name=container_name,
+        config=config,
+        )
 
 def clean_name(input_string: str) -> str:
     """Use regex to replace non-alphanumeric characters with underscores
