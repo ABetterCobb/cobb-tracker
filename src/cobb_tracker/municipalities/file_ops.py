@@ -2,7 +2,7 @@ from pathlib import Path
 import sys
 import os
 import requests
-import concurrent.futures
+import concurrent.futures as cf
 from cobb_tracker.cobb_config import CobbConfig
 
 class FileOps():
@@ -26,10 +26,10 @@ class FileOps():
         self.config = config
 
     def write_minutes_doc(self):
-        with concurrent.futures.ThreadPoolExecutor(max_workers=self.maxconnections) as executor:
+        with cf.ThreadPoolExecutor(max_workers=self.maxconnections) as executor:
             # Start the load operations and mark each future with its URL
             future_to_url = {executor.submit(self.pull_minutes_doc, url): url for url in self.file_urls}
-            for _ in concurrent.futures.as_completed(future_to_url):
+            for _ in cf.as_completed(future_to_url):
                 pass
 
     def pull_minutes_doc(self, url: str):
