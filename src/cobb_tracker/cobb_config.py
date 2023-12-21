@@ -6,34 +6,33 @@ from pathlib import Path
 class CobbConfig():
     def __init__(
             self,
-            config_dir = os.path.join(Path(os.path.expanduser('~')),
-                                      ".config",
-                                      "cobb_tracker"),
-            data_dir = os.path.join(Path(os.path.expanduser('~')),
-                                      ".local",
-                                      "share")
+            config_dir = Path.home().joinpath(".config","cobb_tracker"),
+            data_dir = Path.home().joinpath(".local","share")
             ):
         self.DEFAULT_CONFIG_DIR=config_dir
         self.DEFAULT_DATA_DIR=data_dir
-        self.DEFAULT_CONFIG_FILE = os.path.join(f"{self.DEFAULT_CONFIG_DIR}","config.ini")
+        self.DEFAULT_CONFIG_FILE = Path(f"{self.DEFAULT_CONFIG_DIR}").joinpath("config.ini")
+        self.DEFAULT_DATABASE_DIR = Path(self.DEFAULT_DATA_DIR).joinpath('db')
+        self.DEFAULT_MINUTES_DIR = Path(self.DEFAULT_DATA_DIR).joinpath('minutes')
+
         self.config = configparser.ConfigParser()
 
-        if not os.path.exists(self.DEFAULT_CONFIG_DIR):
-            os.mkdir(self.DEFAULT_CONFIG_DIR)
+        if not Path.exists(self.DEFAULT_CONFIG_DIR):
+            Path.mkdir(self.DEFAULT_CONFIG_DIR)
 
-        if not os.path.exists(self.DEFAULT_CONFIG_FILE):
+        if not Path.exists(self.DEFAULT_CONFIG_FILE):
             self.config['directories'] = {
-                'database_dir': f"{os.path.join(self.DEFAULT_DATA_DIR, 'db')}",
-                'minutes_dir': f"{os.path.join(self.DEFAULT_DATA_DIR, 'minutes')}"
+                'database_dir': f"{self.DEFAULT_DATABASE_DIR}",
+                'minutes_dir': f"{self.DEFAULT_MINUTES_DIR}"
                 }
 
-            if not os.path.exists(self.config['directories']['database_dir']):
-                os.mkdir(self.config['directories']['database_dir'])
+            if not Path.exists(Path(self.config['directories']['database_dir'])):
+                Path.mkdir(self.config['directories']['database_dir'])
 
-            with open(os.path.join(self.DEFAULT_CONFIG_DIR, "config.ini"), 'w') as config_file:
+            with open(Path(self.DEFAULT_CONFIG_DIR).joinpath("config.ini"), 'w') as config_file:
                 self.config.write(config_file)
 
-        elif os.path.exists(self.DEFAULT_CONFIG_FILE):
+        elif Path.exists(self.DEFAULT_CONFIG_FILE):
             self.config.read(self.DEFAULT_CONFIG_FILE) 
             if len(self.config.sections()) == 0:
                 print("Error: Configuration file incorrect")
