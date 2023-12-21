@@ -3,7 +3,7 @@ import sys
 import os
 from pathlib import Path
 
-class cobb_config():
+class CobbConfig():
     def __init__(
             self,
             config_dir = os.path.join(Path(os.path.expanduser('~')),

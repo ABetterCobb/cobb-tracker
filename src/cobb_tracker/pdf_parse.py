@@ -15,13 +15,13 @@ from multiprocessing import Semaphore
 import shutil
 import numpy as np
 from cobb_tracker.municipalities import file_ops
-from cobb_tracker.cobb_config import cobb_config
+from cobb_tracker.cobb_config import CobbConfig
 
-class database_ops():
-    def __init__(self, config: cobb_config):
+class DatabaseOps():
+    def __init__(self, config: CobbConfig):
         """
             Args:
-                congig(cobb_config) Object that contains the user's configuration settings.
+                congig(CobbConfig) Object that contains the user's configuration settings.
         """
         self.SEMAPHORE = Semaphore(len(os.sched_getaffinity(0)))
         self.DATABASE_DIR=config.get_config("directories","database_dir")
@@ -40,7 +40,7 @@ class database_ops():
     def pdf_to_database(self):
         config = self.config
         DB = self.DB 
-        doc_ops = file_ops.file_list(minutes_dir=config.get_config("directories","minutes_dir"))
+        doc_ops = file_ops.FileList(minutes_dir=config.get_config("directories","minutes_dir"))
         all_minutes_files = np.array(doc_ops.minutes_files())
 
         if not DB["pages"].exists():

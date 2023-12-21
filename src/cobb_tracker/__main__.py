@@ -3,10 +3,10 @@ import os
 import argparse
 from cobb_tracker.municipalities import marietta
 from cobb_tracker.municipalities import cobb
-from cobb_tracker.pdf_parse import database_ops
-from cobb_tracker.cobb_config import cobb_config
+from cobb_tracker.pdf_parse import DatabaseOps
+from cobb_tracker.cobb_config import CobbConfig
 
-def choose_muni(municipality: str, config: cobb_config):
+def choose_muni(municipality: str, config: CobbConfig):
     """Chooses what module to run base on the municipality that is entered
     Args:
         municipality (str): Where are you?    
@@ -39,12 +39,12 @@ def main():
         print("error: You must specify -m/--municipality if -p/--push-to-database is not selected")
         sys.exit()
 
-    config = cobb_config()
+    config = CobbConfig()
     if args.municipality is not None:
         choose_muni(args.municipality, config)
 
     if args.push_to_database:
-        pdf_to_db = database_ops(config)
+        pdf_to_db = DatabaseOps(config)
         pdf_to_db.pdf_to_database()
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ import re
 import os
 
 from cobb_tracker.municipalities import file_ops
-from cobb_tracker.cobb_config import cobb_config
+from cobb_tracker.cobb_config import CobbConfig
 
 from threading import Thread
 from threading import BoundedSemaphore
@@ -25,7 +25,7 @@ RE_ALPHA = re.compile(r"[0-9\.\-]")
 
 def name_documents(session: requests.Session,
                           container_name: str,
-                          config: cobb_config,
+                          config: CobbConfig,
                           minutes_urls: dict) -> None:
     """Parse meeting information and documents from a table row.
 
@@ -53,7 +53,7 @@ def name_documents(session: requests.Session,
         minutes_urls[url]["date"]=f"{year}-{month}-{day}"
 
 
-    doc_ops = file_ops.file_ops(
+    doc_ops = file_ops.FileOps(
         session=session,
         user_agent=USER_AGENT,
         file_urls=minutes_urls,
@@ -78,7 +78,7 @@ def get_years(agenda_container: Tag) -> list[str]:
             filtered_year_list.append(entry_string)
     return filtered_year_list
 
-def get_minutes_docs(config: cobb_config):
+def get_minutes_docs(config: CobbConfig):
     minutes_urls = {}
     session = requests.Session()
 

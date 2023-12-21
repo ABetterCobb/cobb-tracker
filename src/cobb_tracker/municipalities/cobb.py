@@ -1,5 +1,5 @@
 from cobb_tracker.municipalities import file_ops
-from cobb_tracker.cobb_config import cobb_config
+from cobb_tracker.cobb_config import CobbConfig
 import requests
 import json
 import re
@@ -41,7 +41,7 @@ def get_all_events(session: requests.Session) -> dict:
             break
     return event_list
 
-def get_minutes_docs(config: cobb_config):
+def get_minutes_docs(config: CobbConfig):
     minutes_urls = {}
     session = requests.Session()
     for event in get_all_events(session):
@@ -64,7 +64,7 @@ def get_minutes_docs(config: cobb_config):
                 minutes_urls[file_url]["file_type"] = "minutes" 
 
 
-    doc_ops = file_ops.file_ops(
+    doc_ops = file_ops.FileOps(
         file_urls=minutes_urls,
         session=session,
         user_agent=USER_AGENT,

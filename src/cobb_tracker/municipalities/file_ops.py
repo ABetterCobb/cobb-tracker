@@ -3,21 +3,21 @@ import sys
 import os
 import requests
 import concurrent.futures
-from cobb_tracker.cobb_config import cobb_config
+from cobb_tracker.cobb_config import CobbConfig
 
-class file_ops():
+class FileOps():
     def __init__(self,
                 session: requests.Session,
                 user_agent: str,
                 file_urls: dict,
-                config: cobb_config
+                config: CobbConfig
                 ):
         """
         Args:
             session (requests.Session): requests session object
             user_agent (str): User agent for requests session object
             file_url (str): Where is this file located?
-            config (cobb_config): cobb_config object to get user specific config
+            config (CobbConfig): CobbConfig object to get user specific config
         """
         self.maxconnections = 15
         self.session = session
@@ -69,7 +69,7 @@ class file_ops():
         else:
             return
 
-class file_list():        
+class FileList():        
     def __init__(self, minutes_dir: str) -> list:
         self.minutes_dir = minutes_dir 
 
