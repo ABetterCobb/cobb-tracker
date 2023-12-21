@@ -14,6 +14,8 @@ from multiprocessing import Semaphore
 
 import shutil
 import numpy as np
+import math
+
 from cobb_tracker.municipalities import file_ops
 from cobb_tracker.cobb_config import CobbConfig
 
@@ -25,6 +27,7 @@ class DatabaseOps():
         """
         self.SEMAPHORE = Semaphore(len(os.sched_getaffinity(0)))
         self.DATABASE_DIR=config.get_config("directories","database_dir")
+        self.MINUTES_DIR=config.get_config("directories","minutes_dir")
         self.DB = Database(os.path.join(self.DATABASE_DIR,"minutes.db"))
         self.config = config
 
@@ -40,8 +43,12 @@ class DatabaseOps():
     def pdf_to_database(self):
         config = self.config
         DB = self.DB 
-        doc_ops = file_ops.FileList(minutes_dir=config.get_config("directories","minutes_dir"))
+        doc_ops = file_ops.FileList(minutes_dir=self.MINUTES_DIR)
+
         all_minutes_files = np.array(doc_ops.minutes_files())
+        if len(all_minutes_files) == 0:
+            print(f"Error: There are no minutes files in {self.MINUTES_DIR}!")
+            return
 
         if not DB["pages"].exists():
             DB["pages"].create(
@@ -50,8 +57,10 @@ class DatabaseOps():
             )
             DB["pages"].enable_fts(["text"], create_triggers=True)
 
-        batches = len(all_minutes_files)/300
+
+        batches = math.ceil(len(all_minutes_files)/300)
         array_of_all_minutes_files = np.array_split(all_minutes_files, batches)
+
         for list_of_minutes_files in array_of_all_minutes_files:
             db_processes = [Process(target=self.write_to_database,args=(file,)) for file in list_of_minutes_files]
             for process in db_processes:
