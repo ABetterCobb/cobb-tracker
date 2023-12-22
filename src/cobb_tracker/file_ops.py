@@ -4,6 +4,7 @@ import os
 import requests
 import concurrent.futures as cf
 from cobb_tracker.cobb_config import CobbConfig
+import hashlib
 
 class FileOps():
     def __init__(self,
@@ -73,6 +74,17 @@ class FileList():
     def __init__(self, minutes_dir: str) -> list:
         self.minutes_dir = minutes_dir 
 
+    
+    def get_checksum(self, minutes_file: Path):
+        BUFFER=(1024 ** 2) * 3
+        m = hashlib.sha256()
+        file = minutes_file
+        while True:
+            chunk = file.read(BUFFER)
+            if not chunk:
+                break
+            m.update(chunk)
+        return m.hexdigest()
     def minutes_files(self):
         all_files = []
         def list_all_files(path: str):

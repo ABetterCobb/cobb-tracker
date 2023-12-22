@@ -17,6 +17,7 @@ import numpy as np
 import math
 
 from cobb_tracker.municipalities import file_ops
+from cobb_tracker import file_ops
 from cobb_tracker.cobb_config import CobbConfig
 
 class DatabaseOps():
@@ -29,6 +30,7 @@ class DatabaseOps():
         self.DATABASE_DIR=config.get_config("directories","database_dir")
         self.MINUTES_DIR=config.get_config("directories","minutes_dir")
         self.DB = Database(os.path.join(self.DATABASE_DIR,"minutes.db"))
+        self.doc_ops = file_ops.FileList(minutes_dir=config.get_config("directories","minutes_dir"))
         self.config = config
 
         tesseract_location = shutil.which('tesseract')
@@ -53,7 +55,7 @@ class DatabaseOps():
         if not DB["pages"].exists():
             DB["pages"].create(
                     { "municipality": str, "body": str, "date": str, "page": int, "text": str},
-                pk=( "municipality","body", "date", "page"),
+                pk=( "municipality","body", "date", "page", "checksum"),
             )
             DB["pages"].enable_fts(["text"], create_triggers=True)
 
@@ -77,6 +79,7 @@ class DatabaseOps():
             ZOOM = 2
             MAT = fitz.Matrix(ZOOM, ZOOM)
             file = str(minutes_file)
+            checksum = str(doc_ops.get_checksum(Path(file)))
             
             try:
                 doc = fitz.open(file)
@@ -107,6 +110,7 @@ class DatabaseOps():
                         "date": date,
                         "page": page.number,
                         "text": page_text,
+                        "checksum": checksum,
 
                     },
                     replace=True,
