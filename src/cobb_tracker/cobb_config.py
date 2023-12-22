@@ -24,10 +24,8 @@ class CobbConfig():
                 'database_dir': f"{self.DEFAULT_DATABASE_DIR}",
                 'minutes_dir': f"{self.DEFAULT_MINUTES_DIR}"
                 }
-
-            if not Path(self.config['directories']['database_dir']).exists():
-                Path.mkdir(self.config['directories']['database_dir'])
-
+            self.DEFAULT_DATABASE_DIR.mkdir(parents=True,exist_ok=True)
+            self.DEFAULT_MINUTES_DIR.mkdir(parents=True,exist_ok=True)
             with open(Path(self.DEFAULT_CONFIG_DIR).joinpath("config.ini"), 'w') as config_file:
                 self.config.write(config_file)
 
