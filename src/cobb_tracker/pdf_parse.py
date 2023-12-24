@@ -56,7 +56,13 @@ class DatabaseOps():
 
         if not DB["pages"].exists():
             DB["pages"].create(
-                    { "municipality": str, "body": str, "date": str, "page": int, "text": str},
+                    { "municipality": str,
+                      "body": str,
+                      "date": str,
+                      "page": int,
+                      "text": str,
+                      "checksum": str
+                     },
                 pk=( "municipality","body", "date", "page", "checksum"),
             )
             DB["pages"].enable_fts(["text"], create_triggers=True)
@@ -81,14 +87,15 @@ class DatabaseOps():
             ZOOM = 2
             MAT = fitz.Matrix(ZOOM, ZOOM)
             file = str(minutes_file)
-            checksum = str(doc_ops.get_checksum(Path(file)))
+            checksum = str(self.doc_ops.get_checksum(Path(file)))
+            print(checksum)
             
             try:
                 doc = fitz.open(file)
 
             except Exception as e:
                 print(f"Error: {e} {file}")
-                return
+                returself.n
 
             rel_doc_path=file.replace(config.get_config('directories','minutes_dir'),'')
             municipality = os.path.normpath(rel_doc_path).split(os.path.sep)[1].replace('_',' ')

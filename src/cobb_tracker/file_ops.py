@@ -78,12 +78,12 @@ class FileList():
     def get_checksum(self, minutes_file: Path):
         BUFFER=(1024 ** 2) * 3
         m = hashlib.sha256()
-        file = minutes_file
-        while True:
-            chunk = file.read(BUFFER)
-            if not chunk:
-                break
-            m.update(chunk)
+        with open(minutes_file,'rb') as file:
+            while True:
+                chunk = file.read(BUFFER)
+                if not chunk:
+                    break
+                m.update(chunk)
         return m.hexdigest()
     def minutes_files(self):
         all_files = []
