@@ -19,6 +19,7 @@ def choose_muni(municipality: str, config: CobbConfig):
         cobb.get_minutes_docs(config=config)
     else:
         print("Municipality not recognized")
+
 def main():
     if os.name != "posix":
         print("Error: cobb-tracker will only work Unix-like systems")
@@ -34,12 +35,17 @@ def main():
             "--push-to-database",
             action="store_true",
             )
+    parser.add_argument(
+            "-f",
+            "--force",
+            action="store_true",
+            )
     args = parser.parse_args()
     if args.push_to_database is False and args.municipality is None:
         print("error: You must specify -m/--municipality if -p/--push-to-database is not selected")
         sys.exit()
 
-    config = CobbConfig()
+    config = CobbConfig(flags=args)
     if args.municipality is not None:
         choose_muni(args.municipality, config)
 

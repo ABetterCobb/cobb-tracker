@@ -31,6 +31,9 @@ class DatabaseOps():
         self.DATABASE_DIR=config.get_config("directories","database_dir")
         self.MINUTES_DIR=config.get_config("directories","minutes_dir")
         self.DB = Database(os.path.join(self.DATABASE_DIR,"minutes.db"))
+
+        self.args = config.get_args()
+
         self.doc_ops = file_ops.FileList(minutes_dir=config.get_config("directories","minutes_dir"))
         self.config = config
         self.mins_and_checksums = {}
@@ -103,7 +106,7 @@ class DatabaseOps():
             date = (os.path.split(Path(file))[1]).replace('-minutes.pdf','')
             checksum_row_count = sum(1 for row in DB.query(f"select * from pages where checksum = '{checksum}'"))
 
-            if checksum_row_count == 0:
+            if checksum_row_count == 0 or self.args.force:
                 print(checksum)
                 print(f"{file}")
                 for page in doc:

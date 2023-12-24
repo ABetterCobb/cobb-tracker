@@ -2,10 +2,12 @@ import configparser
 import sys
 import os
 from pathlib import Path
+import argparse
 
 class CobbConfig():
     def __init__(
             self,
+            flags: argparse.Namespace,
             config_dir = Path.home().joinpath(".config","cobb_tracker"),
             data_dir = Path.home().joinpath(".local","share","cobb_tracker")
             ):
@@ -15,6 +17,7 @@ class CobbConfig():
         self.DEFAULT_DATABASE_DIR = Path(self.DEFAULT_DATA_DIR).joinpath('db')
         self.DEFAULT_MINUTES_DIR = Path(self.DEFAULT_DATA_DIR).joinpath('minutes')
 
+        self.args = flags
         self.config = configparser.ConfigParser()
 
         self.DEFAULT_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
@@ -41,6 +44,7 @@ class CobbConfig():
                 except Exception as e:
                     print(f"Error: {e}, is your configuration correctly formatted?")
                     sys.exit()
-            
+    def get_args(self):
+        return self.args
     def get_config(self, section: str, key: str) -> str:
         return self.config[section][key]
