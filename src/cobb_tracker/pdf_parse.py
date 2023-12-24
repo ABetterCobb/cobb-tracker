@@ -33,6 +33,7 @@ class DatabaseOps():
         self.DB = Database(os.path.join(self.DATABASE_DIR,"minutes.db"))
         self.doc_ops = file_ops.FileList(minutes_dir=config.get_config("directories","minutes_dir"))
         self.config = config
+        self.mins_and_checksums = {}
 
         tesseract_location = shutil.which('tesseract')
         
@@ -82,46 +83,47 @@ class DatabaseOps():
         with self.SEMAPHORE:
             DB = self.DB
             config = self.config
+            checksum = str(self.doc_ops.get_checksum(Path(minutes_file)))
 
             # Must zoom in in order for tesseract to give mostly accurate transcription
             ZOOM = 2
             MAT = fitz.Matrix(ZOOM, ZOOM)
             file = str(minutes_file)
-            checksum = str(self.doc_ops.get_checksum(Path(file)))
-            print(checksum)
             
             try:
                 doc = fitz.open(file)
 
             except Exception as e:
                 print(f"Error: {e} {file}")
-                returself.n
+                return
 
             rel_doc_path=file.replace(config.get_config('directories','minutes_dir'),'')
             municipality = os.path.normpath(rel_doc_path).split(os.path.sep)[1].replace('_',' ')
             body = os.path.normpath(rel_doc_path).split(os.path.sep)[2].replace('_',' ')
             date = (os.path.split(Path(file))[1]).replace('-minutes.pdf','')
-            
-            print(f"{file}")
+            checksum_row_count = sum(1 for row in DB.query(f"select * from pages where checksum = '{checksum}'"))
 
-            for page in doc:
-                pix = page.get_pixmap(matrix=MAT)
-                image_bytes = io.BytesIO(
-                            pix.tobytes(output="jpeg", jpg_quality=98)
-                        )
-                page_image = Image.open(image_bytes)
-                page_text = pytesseract.image_to_string(page_image)
-                page_image.close()
-                DB["pages"].insert(
-                    {
-                        "municipality": municipality,
-                        "body": body,
-                        "date": date,
-                        "page": page.number,
-                        "text": page_text,
-                        "checksum": checksum,
+            if checksum_row_count == 0:
+                print(checksum)
+                print(f"{file}")
+                for page in doc:
+                    pix = page.get_pixmap(matrix=MAT)
+                    image_bytes = io.BytesIO(
+                                pix.tobytes(output="jpeg", jpg_quality=98)
+                            )
+                    page_image = Image.open(image_bytes)
+                    page_text = pytesseract.image_to_string(page_image)
+                    page_image.close()
+                    DB["pages"].insert(
+                        {
+                            "municipality": municipality,
+                            "body": body,
+                            "date": date,
+                            "page": page.number,
+                            "text": page_text,
+                            "checksum": checksum,
 
-                    },
-                    replace=True,
-                )
+                        },
+                        replace=True,
+                    )
             doc.close()
