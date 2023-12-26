@@ -26,9 +26,7 @@ def get_all_events(session: requests.Session) -> dict:
     Each of these meetings will at least have an HTML Agenda, and depending on when the meeting
     took place it will also have either an Agenda or Minutes file
     """
-    event_list = {}
-
-    #The records on Smyrna's primegov site only go back to 2013
+    event_list = []
     for year in range(2013,int(datetime.now().year)+1):
         raw_event_page = json.loads(session.get(f"{MEETINGS_URL}{year}",
                                                 headers={"User-Agent": USER_AGENT}).text)
@@ -81,11 +79,6 @@ def get_minutes_docs(config: CobbConfig):
     doc_ops.write_minutes_doc()
     session = requests.Session()
     for event in get_all_events(session):
-        try:
-            event_type = event["categoryName"].lstrip().replace(' ','_')
-        except:
-            print(f"Error: couldn't retrieve categoryName for Event. \nID: {event['id']} \nName: {event['eventName']} ")
-            event_type = "misc"
         print(event)
 #        event_date = datetime.fromisoformat(
 #                event["eventDate"]
