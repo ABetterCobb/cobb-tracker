@@ -27,7 +27,7 @@ def get_all_events(session: requests.Session) -> dict:
     took place it will also have either an Agenda or Minutes file
     """
     event_list = []
-    for year in range(2013,int(datetime.now().year)+1)
+    for year in range(2013,int(datetime.now().year)+1):
         raw_event_page = json.loads(session.get(f"{MEETINGS_URL}{year}",
                                                 headers={"User-Agent": USER_AGENT}).text)
         event_list[year] = raw_event_page 
@@ -37,11 +37,6 @@ def get_minutes_docs(config: CobbConfig):
     minutes_urls = {}
     session = requests.Session()
     for event in get_all_events(session):
-        try:
-            event_type = event["categoryName"].lstrip().replace(' ','_')
-        except:
-            print(f"Error: couldn't retrieve categoryName for Event. \nID: {event['id']} \nName: {event['eventName']} ")
-            event_type = "misc"
         print(event)
 #        event_date = datetime.fromisoformat(
 #                event["eventDate"]
