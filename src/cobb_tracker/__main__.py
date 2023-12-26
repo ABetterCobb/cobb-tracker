@@ -19,7 +19,7 @@ def choose_muni(municipality: str, config: CobbConfig):
         cobb.get_minutes_docs(config=config)
 
     elif muni == "smyrna":
-        cobb.get_minutes_docs(config=config)
+        smyrna.get_minutes_docs(config=config)
     else:
         print("Municipality not recognized")
 
