@@ -79,3 +79,31 @@ def get_minutes_docs(config: CobbConfig):
         config=config
        )
     doc_ops.write_minutes_doc()
+    session = requests.Session()
+    for event in get_all_events(session):
+        try:
+            event_type = event["categoryName"].lstrip().replace(' ','_')
+        except:
+            print(f"Error: couldn't retrieve categoryName for Event. \nID: {event['id']} \nName: {event['eventName']} ")
+            event_type = "misc"
+        print(event)
+#        event_date = datetime.fromisoformat(
+#                event["eventDate"]
+#                ).strftime("%Y-%m-%d")
+#        for file in event["publishedFiles"]:
+#            file_url = f"{MEETINGS_URL}GetMeetingFileStream(fileId={file['fileId']},plainText=false)"
+#            if file["type"] == "Minutes":
+#                minutes_urls[file_url] = {}
+#                minutes_urls[file_url]["municipality"] = "Cobb"
+#                minutes_urls[file_url]["meeting_name"] = event_type 
+#                minutes_urls[file_url]["date"] = event_date 
+#                minutes_urls[file_url]["file_type"] = "minutes" 
+#
+#
+#    doc_ops = file_ops.FileOps(
+#        file_urls=minutes_urls,
+#        session=session,
+#        user_agent=USER_AGENT,
+#        config=config
+#       )
+#    doc_ops.write_minutes_doc()
