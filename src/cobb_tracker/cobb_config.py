@@ -7,7 +7,7 @@ class CobbConfig():
     def __init__(
             self,
             config_dir = Path.home().joinpath(".config","cobb_tracker"),
-            data_dir = Path.home().joinpath(".local","share")
+            data_dir = Path.home().joinpath(".local","share","cobb_tracker")
             ):
         self.DEFAULT_CONFIG_DIR = Path(config_dir)
         self.DEFAULT_DATA_DIR = Path(data_dir)
@@ -24,10 +24,8 @@ class CobbConfig():
                 'database_dir': f"{self.DEFAULT_DATABASE_DIR}",
                 'minutes_dir': f"{self.DEFAULT_MINUTES_DIR}"
                 }
-
-            if not Path(self.config['directories']['database_dir']).exists():
-                Path.mkdir(self.config['directories']['database_dir'])
-
+            self.DEFAULT_DATABASE_DIR.mkdir(parents=True,exist_ok=True)
+            self.DEFAULT_MINUTES_DIR.mkdir(parents=True,exist_ok=True)
             with open(Path(self.DEFAULT_CONFIG_DIR).joinpath("config.ini"), 'w') as config_file:
                 self.config.write(config_file)
 
@@ -38,8 +36,8 @@ class CobbConfig():
                 sys.exit()
             elif len(self.config.sections()) > 0:
                 try:
-                    self.config.get('directories','database_dir')
-                    self.config.get('directories','minutes_dir')
+                    Path(self.config.get('directories','database_dir')).mkdir(parents=True,exist_ok=True)
+                    Path(self.config.get('directories','minutes_dir')).mkdir(parents=True,exist_ok=True)
                 except Exception as e:
                     print(f"Error: {e}, is your configuration correctly formatted?")
                     sys.exit()
