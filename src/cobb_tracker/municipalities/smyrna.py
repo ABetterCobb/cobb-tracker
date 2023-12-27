@@ -27,6 +27,8 @@ def get_all_events(session: requests.Session) -> dict:
     took place it will also have either an Agenda or Minutes file
     """
     event_list = {}
+
+    #The records on Smyrna's primegov site only go back to 2013
     for year in range(2013,int(datetime.now().year)+1):
         raw_event_page = json.loads(session.get(f"{MEETINGS_URL}{year}",
                                                 headers={"User-Agent": USER_AGENT}).text)
