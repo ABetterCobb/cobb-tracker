@@ -26,7 +26,7 @@ def get_all_events(session: requests.Session) -> dict:
     Each of these meetings will at least have an HTML Agenda, and depending on when the meeting
     took place it will also have either an Agenda or Minutes file
     """
-    event_list = []
+    event_list = {}
     for year in range(2013,int(datetime.now().year)+1):
         raw_event_page = json.loads(session.get(f"{MEETINGS_URL}{year}",
                                                 headers={"User-Agent": USER_AGENT}).text)
@@ -35,26 +35,40 @@ def get_all_events(session: requests.Session) -> dict:
 
 def get_minutes_docs(config: CobbConfig):
     minutes_urls = {}
+
+    #The clerk was having too much fun with the meeting titles
+    smyrna_clean = [r' on \d{4}-\d{2}-\d{2}(.*)$',
+                    r':(.*)',
+                    r'\s?\d{2}-\d{2}-\d{4}\s?',
+                    r'(\b\d{1,2}\D{0,3})?\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|(Nov|Dec)(?:ember)?)\D?(\d{1,2}\D?)?\D?((19[7-9]\d|20\d{2})|\d{2})\s?',
+                    r'(^\s?)?(\s?$)?',
+                    r'(\s-(.*))?( Meeting)?(\sNotice\sand\sAgenda)?']
     session = requests.Session()
-    for event in get_all_events(session):
-        print(event)
-#        event_date = datetime.fromisoformat(
-#                event["eventDate"]
-#                ).strftime("%Y-%m-%d")
-#        for file in event["publishedFiles"]:
-#            file_url = f"{MEETINGS_URL}GetMeetingFileStream(fileId={file['fileId']},plainText=false)"
-#            if file["type"] == "Minutes":
-#                minutes_urls[file_url] = {}
-#                minutes_urls[file_url]["municipality"] = "Cobb"
-#                minutes_urls[file_url]["meeting_name"] = event_type 
-#                minutes_urls[file_url]["date"] = event_date 
-#                minutes_urls[file_url]["file_type"] = "minutes" 
-#
-#
-#    doc_ops = file_ops.FileOps(
-#        file_urls=minutes_urls,
-#        session=session,
-#        user_agent=USER_AGENT,
-#        config=config
-#       )
-#    doc_ops.write_minutes_doc()
+    event_data = get_all_events(session)
+    for year in event_data:
+        for event in event_data[year]:
+            event_date = datetime.strptime(
+                    event["date"],
+                    "%b %d, %Y"
+                    ).strftime("%Y-%m-%d")
+            for file in event["documentList"]:
+                if file["templateName"] == "Minutes":
+                    event_title = event["title"].replace('\n','')
+                    
+                    for regex in smyrna_clean: 
+                        event_title = re.sub(regex,'',event_title)
+                    
+                    file_url = f"{MINUTES_URL}{file['templateId']}"
+                    minutes_urls[file_url] = {}
+                    minutes_urls[file_url]["municipality"] = "Smyrna"
+                    minutes_urls[file_url]["meeting_name"] = event_title
+                    minutes_urls[file_url]["date"] = event_date 
+                    minutes_urls[file_url]["file_type"] = "minutes" 
+
+    doc_ops = file_ops.FileOps(
+        file_urls=minutes_urls,
+        session=session,
+        user_agent=USER_AGENT,
+        config=config
+       )
+    doc_ops.write_minutes_doc()
