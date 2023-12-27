@@ -26,7 +26,7 @@ def get_all_events(session: requests.Session) -> dict:
     Each of these meetings will at least have an HTML Agenda, and depending on when the meeting
     took place it will also have either an Agenda or Minutes file
     """
-    event_list = []
+    event_list = {}
     for year in range(2013,int(datetime.now().year)+1):
         raw_event_page = json.loads(session.get(f"{MEETINGS_URL}{year}",
                                                 headers={"User-Agent": USER_AGENT}).text)
@@ -77,26 +77,3 @@ def get_minutes_docs(config: CobbConfig):
         config=config
        )
     doc_ops.write_minutes_doc()
-    session = requests.Session()
-    for event in get_all_events(session):
-        print(event)
-#        event_date = datetime.fromisoformat(
-#                event["eventDate"]
-#                ).strftime("%Y-%m-%d")
-#        for file in event["publishedFiles"]:
-#            file_url = f"{MEETINGS_URL}GetMeetingFileStream(fileId={file['fileId']},plainText=false)"
-#            if file["type"] == "Minutes":
-#                minutes_urls[file_url] = {}
-#                minutes_urls[file_url]["municipality"] = "Cobb"
-#                minutes_urls[file_url]["meeting_name"] = event_type 
-#                minutes_urls[file_url]["date"] = event_date 
-#                minutes_urls[file_url]["file_type"] = "minutes" 
-#
-#
-#    doc_ops = file_ops.FileOps(
-#        file_urls=minutes_urls,
-#        session=session,
-#        user_agent=USER_AGENT,
-#        config=config
-#       )
-#    doc_ops.write_minutes_doc()
