@@ -105,7 +105,6 @@ class DatabaseOps():
             checksum_row_count = sum(1 for row in DB.query(f"select * from pages where checksum = '{checksum}'"))
 
             if checksum_row_count == 0 or self.args.force:
-                print(checksum)
                 print(f"{file}")
                 for page in doc:
                     pix = page.get_pixmap(matrix=MAT)
