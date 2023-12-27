@@ -1,10 +1,7 @@
 import sys
 import os
 import argparse
-from cobb_tracker.municipalities import marietta,
-                                        civicplus,
-                                        smyrna,
-                                        acworth
+from cobb_tracker.municipalities import marietta, civicplus, smyrna, acworth
 from cobb_tracker.pdf_parse import DatabaseOps
 from cobb_tracker.cobb_config import CobbConfig
 
