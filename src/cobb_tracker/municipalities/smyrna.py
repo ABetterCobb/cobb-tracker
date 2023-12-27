@@ -68,7 +68,7 @@ def get_minutes_docs(config: CobbConfig):
                     file_url = f"{MINUTES_URL}{file['templateId']}"
                     minutes_urls[file_url] = {}
                     minutes_urls[file_url]["municipality"] = "Smyrna"
-                    minutes_urls[file_url]["meeting_name"] = event_title
+                    minutes_urls[file_url]["meeting_name"] = event_title.replace(' ','_')
                     minutes_urls[file_url]["date"] = event_date 
                     minutes_urls[file_url]["file_type"] = "minutes" 
 
