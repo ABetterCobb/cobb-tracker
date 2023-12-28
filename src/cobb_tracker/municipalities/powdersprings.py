@@ -20,7 +20,18 @@ minutes_urls = {}
 muni = "Powder Springs"
 session = requests.Session()
 
-#Pain
+'''This expression will try to match many variations of MM/DD/YYYY
+The way that Powder Springs stores data means that we're not able
+to get information from almost anywhere except the file description.
+The dates are in various formats like:
+    12.04.23
+    12 .04.23
+    February 12, 2020
+    12.03/22
+    12-23-21
+all of these will need to be matched since there is no other way to get
+that information.
+'''
 get_year = re.compile(r'((\b(?:(Jan|JAN)(?:uary)?|(FEB|Feb)(?:ruary)?|(Mar|MAR)(?:ch)?|(Apr|APRIL)(?:il)?|(May|MAY)|(Jun|JUNE)(?:e)?|(JULY|Jul)(?:y)?|(AUG|Aug)(?:ust)?|(Sep|Sept|SEPT)(?:tember)?|(OCT|Oct)(?:ober)?|(Nov|NOV|Dec|DEC|DECEMBER)(?:ember)?)\s?(\.|,)?\s?(\d{1,2}\D?)?\D?\s?((19[7-9]\d|20\d{2})))|(\d{1,2}(\.|/|-|,)\s?\d{1,2}(\.|/|-|,)\s?\d{2,4})|([0-1][1-9][0-2][0-9][0-9][0-9])|((JAN|JANUARY)\s{1,2}\d{1,2},\s\d{2}))')
 
 USER_AGENT = (
