@@ -8,6 +8,7 @@ import dateutil.parser
 
 from cobb_tracker.municipalities import file_ops
 from cobb_tracker.cobb_config import CobbConfig
+from cobb_tracker.string_ops import parse_date
 
 from bs4.element import Tag
 from bs4 import BeautifulSoup
@@ -65,10 +66,6 @@ def get_minutes_docs(config: CobbConfig):
         config=config
        )
     doc_ops.write_minutes_doc()
-
-def parse_date(raw_date: str):
-    filtered_date = dateutil.parser.parse(re.sub(r'([a-z]{1})(\d)',r'\1 \2',raw_date))
-    return filtered_date.strftime("%Y-%m-%d")
     
 def get_meeting_info(archive_groups: dict): 
     spell = Speller('en')
