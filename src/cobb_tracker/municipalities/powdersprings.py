@@ -2,6 +2,9 @@ import requests
 import re
 import os
 import sys
+
+from autocorrect import Speller
+
 from cobb_tracker.municipalities import file_ops
 from cobb_tracker.cobb_config import CobbConfig
 
@@ -11,12 +14,14 @@ from bs4 import BeautifulSoup
 URL_BASE = "https://cityofpowdersprings.org/"
 LIST_OF_ARCHIVE_SECTIONS = f"{URL_BASE}Archive.aspx"
 BASE_FILE_URL = f"{URL_BASE}ArchiveCenter/ViewFile/Item/"
-get_year = re.compile(r'((\b(?:(Jan|JAN)(?:uary)?|(FEB|Feb)(?:ruary)?|(Mar|MAR)(?:ch)?|(Apr|APRIL)(?:il)?|(May|MAY)|(Jun|JUNE)(?:e)?|(JULY|Jul)(?:y)?|(AUG|Aug)(?:ust)?|(Sep|Sept|SEPT)(?:tember)?|(OCT|Oct)(?:ober)?|(Nov|NOV|Dec|DEC)(?:ember)?)\s?(\.|,)?\s?(\d{1,2}\D?)?\D?\s?((19[7-9]\d|20\d{2})))|(\d{1,2}(\.|/|-|,)\s?\d{1,2}(\.|/|-|,)\s?\d{2,4})|([0-1][1-9][0-2][0-9][0-9][0-9]))')
+FILE_PAGE = f"{LIST_OF_ARCHIVE_SECTIONS}?ADID="
+get_year = re.compile(r'((\b(?:(Jan|JAN)(?:uary)?|(FEB|Feb)(?:ruary)?|(Mar|MAR)(?:ch)?|(Apr|APRIL)(?:il)?|(May|MAY)|(Jun|JUNE)(?:e)?|(JULY|Jul)(?:y)?|(AUG|Aug)(?:ust)?|(Sep|Sept|SEPT)(?:tember)?|(OCT|Oct)(?:ober)?|(Nov|NOV|Dec|DEC|DECEMBER)(?:ember)?)\s?(\.|,)?\s?(\d{1,2}\D?)?\D?\s?((19[7-9]\d|20\d{2})))|(\d{1,2}(\.|/|-|,)\s?\d{1,2}(\.|/|-|,)\s?\d{2,4})|([0-1][1-9][0-2][0-9][0-9][0-9])|((JAN|JANUARY)\s{1,2}\d{1,2},\s\d{2}))')
 
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0"
     )
 def get_minutes_docs(config: CobbConfig):
+    spell = Speller('en')
     session = requests.Session()
     archive_groups = {} 
     response = session.get(LIST_OF_ARCHIVE_SECTIONS, headers={"User-Agent": USER_AGENT})
@@ -51,10 +56,33 @@ def get_minutes_docs(config: CobbConfig):
                 if link is not None and name is not None: 
                     result = get_year.search(str(name.text))
                     if result is not None:
-                        print(result.group(0))
+                        print(re.sub(r'([a-z]{1})(\d)',r'\1 \2',result.group(0)))
                     else:
-                        print(name.text)
-                    file_id = re.sub(r'[a-zA-Zw\.\?=]','',link.get('href'))
-                    print(f"{BASE_FILE_URL}{file_id}")
+                        corrected_title = (spell(name.text))
+                        result = get_year.search(str(corrected_title))
+                        if result is not None:
+                            print(result.group(0))
+                        else:
+                            #print(name.text)
+                            file_id = re.sub(r'[a-zA-Zw\.\?=]','',link.get('href'))
+                            singular_page = session.get(f"{FILE_PAGE}{file_id}", headers={"User-Agent": USER_AGENT})
+                            if not singular_page.ok:
+                                print("Request failed:", singular_page.reason, singular_page.status_code)
+                                return
+                            singular_page_text = BeautifulSoup(singular_page.text, 'html.parser')
+                            links = singular_page_text.find_all("a")
+                            for link in links:
+                                if link.get("href") is not None:
+                                    if "ArchiveCenter" in (link.get("href")):
+                                        link_text = link.text
+                                        lines = link_text.split('\n')
+                                        filtered_link_text = [line for line in lines if line.strip() != '']
+                                        date = get_year.search(filtered_link_text[0])
+                                        if date is not None:
+                                            print(re.sub(r'([a-z]{1})(\d)',r'\1 \2',date.group(0)))
+                                        #print(link.get("href"))
+                                        else:
+                                            print("borked link")
+                    #file_id = re.sub(r'[a-zA-Zw\.\?=]','',link.get('href'))
 
 
