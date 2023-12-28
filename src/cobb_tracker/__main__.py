@@ -16,7 +16,7 @@ def choose_muni(municipality: str, config: CobbConfig):
 
     elif muni == "cobb":
         cobb_civic = civicplus.CivicPlus(base_url="https://cobbcoga.api.civicclerk.com/v1", muni="Cobb")
-        cobb_plus.get_minutes_docs(config=config)
+        cobb_civic.get_minutes_docs(config=config)
 
 
     elif muni == "acworth":
