@@ -17,7 +17,7 @@ LIST_OF_ARCHIVE_SECTIONS = f"{URL_BASE}Archive.aspx"
 BASE_FILE_URL = f"{URL_BASE}ArchiveCenter/ViewFile/Item/"
 FILE_PAGE = f"{LIST_OF_ARCHIVE_SECTIONS}?ADID="
 minutes_urls = {}
-minutes_urls[file_url]["municipality"] = "Powder Springs"
+muni = "Powder Springs"
 
 #Pain
 get_year = re.compile(r'((\b(?:(Jan|JAN)(?:uary)?|(FEB|Feb)(?:ruary)?|(Mar|MAR)(?:ch)?|(Apr|APRIL)(?:il)?|(May|MAY)|(Jun|JUNE)(?:e)?|(JULY|Jul)(?:y)?|(AUG|Aug)(?:ust)?|(Sep|Sept|SEPT)(?:tember)?|(OCT|Oct)(?:ober)?|(Nov|NOV|Dec|DEC|DECEMBER)(?:ember)?)\s?(\.|,)?\s?(\d{1,2}\D?)?\D?\s?((19[7-9]\d|20\d{2})))|(\d{1,2}(\.|/|-|,)\s?\d{1,2}(\.|/|-|,)\s?\d{2,4})|([0-1][1-9][0-2][0-9][0-9][0-9])|((JAN|JANUARY)\s{1,2}\d{1,2},\s\d{2}))')
@@ -65,7 +65,7 @@ def parse_date(raw_date: str):
 def get_meeting_info(archive_groups: dict): 
 
     for group in archive_groups.keys():
-        if group != "Press Releases" and group != "Town Hall Meetings and Retreats":
+        if archive_groups[group] != "Press Releases" and archive_groups[group] != "Town Hall Meetings and Retreats":
             minutes_urls[file_url]["meeting_name"] = group
             group_page = f"{LIST_OF_ARCHIVE_SECTIONS}?AMID={group}&Type=&ADID="
             archive_page_response = session.get(group_page, headers={"User-Agent": USER_AGENT})
@@ -99,7 +99,10 @@ def get_meeting_info(archive_groups: dict):
                     if "minutes" in name.text.lower() and "agenda" not in name.text.lower():
                         file_id = re.sub(r'[a-zA-Zw\.\?=]','',link.get('href'))
                         file_url = f"{BASE_FILE_URL}{file_id}"
+
                         minutes_urls[file_url] = {}
+
+                        minutes_urls[file_url]["municipality"] = muni
                         result = get_year.search(str(name.text))
 
                         if result is not None:
@@ -133,4 +136,4 @@ def get_meeting_info(archive_groups: dict):
                                                 minutes_urls[file_url]["date"] = parse_date(date.group(0))
 
                                             else:
-                                                minutes_urls[file_url]["date"] = "Date Unknown"
+                                                minutes_urls[file_url]["date"] = "Date Unknown
