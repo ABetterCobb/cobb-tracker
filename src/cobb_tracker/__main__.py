@@ -36,7 +36,7 @@ def choose_muni(municipality: str, config: CobbConfig):
 
     elif muni == "kennesaw":
         kennesaw_civic = civicplus.CivicPlus(base_url="https://kennesawga.api.civicclerk.com/v1", muni="Kennesaw")
-        #kennesaw_civic.get_minutes_docs(config=config)
+        kennesaw_civic.get_minutes_docs(config=config)
         novusagenda.get_minutes_docs(config=config)
 
     elif muni == "smyrna":
