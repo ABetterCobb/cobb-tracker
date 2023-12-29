@@ -6,7 +6,8 @@ from cobb_tracker.municipalities import (marietta,
                                          smyrna,
                                          acworth,
                                          powdersprings,
-                                         austell
+                                         austell,
+                                         novusagenda
                                          )
 from cobb_tracker.pdf_parse import DatabaseOps
 from cobb_tracker.cobb_config import CobbConfig
@@ -36,6 +37,7 @@ def choose_muni(municipality: str, config: CobbConfig):
     elif muni == "kennesaw":
         kennesaw_civic = civicplus.CivicPlus(base_url="https://kennesawga.api.civicclerk.com/v1", muni="Kennesaw")
         kennesaw_civic.get_minutes_docs(config=config)
+        novusagenda.get_minutes_docs(config=config)
 
     elif muni == "smyrna":
         smyrna.get_minutes_docs(config=config)
