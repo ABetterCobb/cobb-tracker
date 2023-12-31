@@ -28,7 +28,7 @@ class DatabaseOps():
         self.SEMAPHORE = Semaphore(len(os.sched_getaffinity(0)))
         self.DATABASE_DIR=config.get_config("directories","database_dir")
         self.MINUTES_DIR=config.get_config("directories","minutes_dir")
-        self.DB = Database(os.path.join(self.DATABASE_DIR,"minutes.db"))
+        self.DB = Database(Path(self.DATABASE_DIR).joinpath("minutes.db"))
 
         self.args = config.args
 
