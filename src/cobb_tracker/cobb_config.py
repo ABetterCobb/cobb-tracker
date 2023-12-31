@@ -44,7 +44,5 @@ class CobbConfig():
                 except Exception as e:
                     print(f"Error: {e}, is your configuration correctly formatted?")
                     sys.exit()
-    def get_args(self):
-        return self.args
     def get_config(self, section: str, key: str) -> str:
         return self.config[section][key]

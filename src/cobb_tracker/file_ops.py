@@ -50,7 +50,7 @@ class FileOps():
         doc_name=f"{doc_date}-{file_type}.pdf"
         doc_full_path=os.path.join(pdf_path,doc_name)
 
-        args = self.config.get_args()
+        args = self.config.args
         if not os.path.exists(doc_full_path) or args.force:
             pdf_path.mkdir(parents=True, exist_ok=True)
             response = requests.get(file_url, headers={"User-Agent": self.user_agent})

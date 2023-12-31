@@ -30,7 +30,7 @@ class DatabaseOps():
         self.MINUTES_DIR=config.get_config("directories","minutes_dir")
         self.DB = Database(os.path.join(self.DATABASE_DIR,"minutes.db"))
 
-        self.args = config.get_args()
+        self.args = config.args
 
         self.doc_ops = file_ops.FileList(minutes_dir=config.get_config("directories","minutes_dir"))
         self.config = config
