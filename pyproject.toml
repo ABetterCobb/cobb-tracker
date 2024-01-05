@@ -27,7 +27,6 @@ dependencies = [
   "pytesseract",
   "datasette",
   "autocorrect",
-  "docker",
   "selenium"
 ]
 

@@ -1,12 +1,13 @@
 #!/usr/bin/env python
-import docker
 import subprocess
 import re
-
+import shutil
 import time
 
+
+import sys
 from datetime import datetime
-from cobb_tracker.string_ops import parse_date 
+from cobb_tracker.string_ops import parse_date
 
 import requests
 from cobb_tracker.file_ops import FileOps
@@ -14,25 +15,61 @@ from cobb_tracker.cobb_config import CobbConfig
 
 from selenium.common.exceptions import ElementNotInteractableException
 from selenium import webdriver
+import signal
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
+
+
+def signal_handler(signal, frame):
+    subprocess.run(["sudo", "docker", "rm", "-f", "selenium"],
+                   stdout=subprocess.DEVNULL) 
+    sys.exit(0)
+
 
 def get_minutes_docs(config: CobbConfig):
     USER_AGENT = (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0"
     )
-    client = docker.from_env()
-    try:
-        client.containers.run("selenium/standalone-chrome:latest",
-                              ports={4444:4444,7900:7900},
-                              shm_size="2G",
-                              name="selenium",
-                              detach=True,
-                              auto_remove=True
-                              )
-    except Exception as e:
-        print(f"Error {e}")
+    signal.signal(signal.SIGINT, signal_handler)
+    docker_location = shutil.which('docker')
+    if sys.platform.startswith('linux'):
+        if docker_location is None:
+            print("Error: Docker is not in PATH or not installed")
+            sys.exit()
+
+        try:
+            subprocess.run(['sudo', 'systemctl', 'start', 'docker'])
+            subprocess.run(['sudo', 'docker', 'run',
+                            '-p', '4444:4444',
+                            '-p', '7900:7900',
+                            '--rm',
+                            '-d',
+                            '--name', 'selenium',
+                            '-it', 'selenium/standalone-chrome:latest'])
+        except Exception as e:
+            print(f"Error: {e}")
+            sys.exit()
+
+    elif sys.platform.startswith('darwin'):
+        if docker_location is None:
+            print("Error: Docker is not in PATH or not installed")
+            sys.exit()
+
+        try:
+            subprocess.run(['docker', 'run',
+                            '-p', '4444:4444',
+                            '-p', '7900:7900',
+                            '--rm',
+                            '-d',
+                            '--name', 'selenium',
+                            '-it', 'selenium/standalone-chrome:latest'])
+    
+        except Exception as e:
+            print(f"Error: {e}")
+            sys.exit()
+    else:
+        print(f"Error: Unsupported platform {sys.platform}")
 
     time.sleep(5)
     browser = webdriver.Remote(command_executor="http://localhost:4444", options=webdriver.ChromeOptions())
@@ -94,7 +131,7 @@ def get_minutes_docs(config: CobbConfig):
                break 
     finally:
         browser.quit()
-        subprocess.run(["docker", "rm", "-f", "selenium"],
+        subprocess.run(["sudo", "docker", "rm", "-f", "selenium"],
                        stdout=subprocess.DEVNULL) 
 
         session = requests.Session()
