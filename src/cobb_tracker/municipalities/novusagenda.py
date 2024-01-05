@@ -131,7 +131,12 @@ def get_minutes_docs(config: CobbConfig):
                break 
     finally:
         browser.quit()
+
+    if sys.platform.startswith('linux'):
         subprocess.run(["sudo", "docker", "rm", "-f", "selenium"],
+                       stdout=subprocess.DEVNULL) 
+    elif sys.platform.startswith('darwin'):
+        subprocess.run(["docker", "rm", "-f", "selenium"],
                        stdout=subprocess.DEVNULL) 
 
         session = requests.Session()
