@@ -6,16 +6,13 @@ import re
 
 from datetime import datetime
 
-import pathlib
-import sys
-import os
 
 """Smyrna's website (https://smyrnaga.primegov.com) is powered by PrimeGov. 
    As of 2023-12-26 we have access the API
 """
 BASE_URL = "https://smyrnaga.primegov.com/api/v2/PublicPortal"
 MEETINGS_URL = f"{BASE_URL}/ListArchivedMeetings?year="
-MINUTES_URL = f"https://smyrnaga.primegov.com/Public/CompiledDocument?meetingTemplateId="
+MINUTES_URL = "https://smyrnaga.primegov.com/Public/CompiledDocument?meetingTemplateId="
 #[num]&compileOutputType=1
 
 USER_AGENT = (

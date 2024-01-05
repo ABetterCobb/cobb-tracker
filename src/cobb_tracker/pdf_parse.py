@@ -4,7 +4,6 @@ import pytesseract
 
 from PIL import Image
 from sqlite_utils import Database
-from sqlite_utils import db
 import io
 
 from pathlib import Path
@@ -19,6 +18,7 @@ from cobb_tracker import file_ops
 import math
 from cobb_tracker.cobb_config import CobbConfig
 
+
 class DatabaseOps():
     def __init__(self, config: CobbConfig):
         """
@@ -26,7 +26,8 @@ class DatabaseOps():
                 congig(CobbConfig) Object that contains the user's configuration settings.
         """
         self.SEMAPHORE = Semaphore(len(os.sched_getaffinity(0)))
-        self.DATABASE_DIR=config.get_config("directories","database_dir")
+        self.DATABASE_DIR = config.get_config("directories",
+                                              "database_dir")
         self.MINUTES_DIR=config.get_config("directories","minutes_dir")
         self.DB = Database(Path(self.DATABASE_DIR).joinpath("minutes.db"))
 
@@ -37,16 +38,14 @@ class DatabaseOps():
         self.mins_and_checksums = {}
 
         tesseract_location = shutil.which('tesseract')
-        
+    
         if tesseract_location is not None:
             pytesseract.pytesseract.tesseract_cmd = tesseract_location
         else:
             print("Error: Tesseract is not in PATH or is not installed")
             sys.exit()
 
-
     def pdf_to_database(self):
-        config = self.config
         DB = self.DB 
         all_minutes_files = np.array(self.doc_ops.minutes_files())
         doc_ops = file_ops.FileList(minutes_dir=self.MINUTES_DIR)
@@ -74,13 +73,13 @@ class DatabaseOps():
         array_of_all_minutes_files = np.array_split(all_minutes_files, batches)
 
         for list_of_minutes_files in array_of_all_minutes_files:
-            db_processes = [Process(target=self.write_to_database,args=(file,)) for file in list_of_minutes_files]
+            db_processes = [Process(target=self.write_to_database, args=(file,)) for file in list_of_minutes_files]
             for process in db_processes:
                 process.start()
             for process in db_processes:
                 process.join()
 
-    def write_to_database(self,minutes_file: str):
+    def write_to_database(self, minutes_file: str):
         with self.SEMAPHORE:
             DB = self.DB
             config = self.config
@@ -90,7 +89,7 @@ class DatabaseOps():
             ZOOM = 2
             MAT = fitz.Matrix(ZOOM, ZOOM)
             file = str(minutes_file)
-            
+           
             try:
                 doc = fitz.open(file)
 
