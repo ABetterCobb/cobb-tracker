@@ -3,7 +3,7 @@ import re
 
 from autocorrect import Speller
 
-from cobb_tracker.municipalities import file_ops
+from cobb_tracker import file_ops
 from cobb_tracker.cobb_config import CobbConfig
 from cobb_tracker.string_ops import parse_date
 
