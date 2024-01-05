@@ -9,7 +9,7 @@ from datetime import datetime
 from cobb_tracker.string_ops import parse_date 
 
 import requests
-from cobb_tracker.municipalities.file_ops import FileOps
+from cobb_tracker.file_ops import FileOps
 from cobb_tracker.cobb_config import CobbConfig
 
 from selenium.common.exceptions import ElementNotInteractableException
