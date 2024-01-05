@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 import docker
 import subprocess
-import sys
 import re
 
-import signal
 import time
 
 from datetime import datetime
@@ -57,11 +55,7 @@ def get_minutes_docs(config: CobbConfig):
         search = browser.find_element("id","ctl00_ContentPlaceHolder1_SearchAgendasMeetings_imageButtonSearch")
         search.click()
         time.sleep(6)
-        pages_num = browser.find_element(By.XPATH, "/html/body/form/div[4]/div[2]/div[3]/span/table/tbody/tr[3]/td/div[3]/div[1]/div[1]/div/div/table/tfoot/tr/td/table/tbody/tr/td/div[5]").text
-        minutes_links = []
         minutes_urls = {}
-        get_page_num = r'( \d.* items in )|( pages)'
-        page_num = int(re.sub(get_page_num,'',pages_num))
 
         minutes_row_reg = re.compile(r'ctl00_ContentPlaceHolder1_SearchAgendasMeetings_radGridMeetings_ctl00.*')
         minutes_link_reg = re.compile(r'ctl00_ContentPlaceHolder1_SearchAgendasMeetings_radGridMeetings.*hypMinutesPDF')
@@ -83,7 +77,7 @@ def get_minutes_docs(config: CobbConfig):
                 else:
                     columns.append(None)
 
-                if columns[2] != None:
+                if columns[2] is not None:
                     file_url = columns[2]
                     minutes_urls[file_url] = {}
                     minutes_urls[file_url]["municipality"] = "Kennesaw"

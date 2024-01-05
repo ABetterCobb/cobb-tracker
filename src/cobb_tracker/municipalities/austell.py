@@ -1,19 +1,12 @@
 
 import requests
-import re
-import os
-import sys
 
-from autocorrect import Speller
-import dateutil.parser
 
-from cobb_tracker.municipalities import file_ops
 from cobb_tracker.string_ops import parse_date
 
 from cobb_tracker.municipalities import file_ops
 from cobb_tracker.cobb_config import CobbConfig
 
-from bs4.element import Tag
 from bs4 import BeautifulSoup
 
 URL_BASE = "https://www.austellga.gov/"
@@ -37,7 +30,7 @@ def get_minutes_docs(config: CobbConfig):
             return
         current_minutes_page = BeautifulSoup(response.text, 'html.parser')
         years_container = current_minutes_page.find("div",class_="mcms_RendererContentDetail")
-        minutes_divs = [div for div in years_container.find_all("div") if div.find("h3") != None and div.find("h3").text == "Minutes"]
+        minutes_divs = [div for div in years_container.find_all("div") if div.find("h3") is not None and div.find("h3").text == "Minutes"]
 
         for div in minutes_divs:
             new_urls = {f"{URL_BASE}{url.get('href')}": parse_date(url.text) for url in div.find_all("a")}

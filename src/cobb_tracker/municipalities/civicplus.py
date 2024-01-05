@@ -2,13 +2,9 @@ from cobb_tracker.municipalities import file_ops
 from cobb_tracker.cobb_config import CobbConfig
 import requests
 import json
-import re
 
 from datetime import datetime
 
-import pathlib
-import sys
-import os
 
 class CivicPlus: 
     def __init__(self, base_url: str, muni: str):
@@ -48,8 +44,8 @@ class CivicPlus:
         for event in self.get_all_events(session):
             try:
                 event_type = event["categoryName"].lstrip().replace(' ','_')
-            except:
-                print(f"Error: couldn't retrieve categoryName for Event. \nID: {event['id']} \nName: {event['eventName']} ")
+            except Exception as e:
+                print(f"Error: couldn't retrieve categoryName for Event. \nID: {event['id']} \nName: {event['eventName']} {e} ")
                 event_type = "misc"
 
             event_date = datetime.fromisoformat(
