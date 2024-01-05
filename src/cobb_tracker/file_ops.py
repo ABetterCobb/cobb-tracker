@@ -1,5 +1,4 @@
 from pathlib import Path
-import sys
 import os
 import requests
 import concurrent.futures as cf

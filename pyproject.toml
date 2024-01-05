@@ -26,6 +26,8 @@ dependencies = [
   "Pillow",
   "pytesseract",
   "datasette",
+  "autocorrect",
+  "selenium"
 ]
 
 [project.urls]

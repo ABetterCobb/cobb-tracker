@@ -1,13 +1,9 @@
 import requests
-import pathlib
 import re
-import os
 
 from cobb_tracker import file_ops
 from cobb_tracker.cobb_config import CobbConfig
 
-from threading import Thread
-from threading import BoundedSemaphore
 
 from bs4.element import Tag
 from bs4 import BeautifulSoup
@@ -41,11 +37,9 @@ def name_documents(session: requests.Session,
         minutes_urls[url]["meeting_name"] = clean_name(meeting_title.text.strip().title())
         minutes_urls[url]["municipality"] = "Marietta" 
         minutes_urls[url]["file_type"] = "minutes"
-        date_header = row.find("td", class_=None)
         
         minutes_name = url.split("/")[-1]
 
-        doc_id = minutes_name.split("-")[1]
         year = minutes_name[5:9]
         month = minutes_name[1:3]
         day = minutes_name[3:5]
