@@ -14,9 +14,9 @@ from multiprocessing import Semaphore
 
 import shutil
 import numpy as np
-import math
 
-from cobb_tracker.municipalities import file_ops
+from cobb_tracker import file_ops
+import math
 from cobb_tracker.cobb_config import CobbConfig
 
 class DatabaseOps():
@@ -28,8 +28,13 @@ class DatabaseOps():
         self.SEMAPHORE = Semaphore(len(os.sched_getaffinity(0)))
         self.DATABASE_DIR=config.get_config("directories","database_dir")
         self.MINUTES_DIR=config.get_config("directories","minutes_dir")
-        self.DB = Database(os.path.join(self.DATABASE_DIR,"minutes.db"))
+        self.DB = Database(Path(self.DATABASE_DIR).joinpath("minutes.db"))
+
+        self.args = config.args
+
+        self.doc_ops = file_ops.FileList(minutes_dir=config.get_config("directories","minutes_dir"))
         self.config = config
+        self.mins_and_checksums = {}
 
         tesseract_location = shutil.which('tesseract')
         
@@ -43,6 +48,7 @@ class DatabaseOps():
     def pdf_to_database(self):
         config = self.config
         DB = self.DB 
+        all_minutes_files = np.array(self.doc_ops.minutes_files())
         doc_ops = file_ops.FileList(minutes_dir=self.MINUTES_DIR)
 
         all_minutes_files = np.array(doc_ops.minutes_files())
@@ -52,8 +58,14 @@ class DatabaseOps():
 
         if not DB["pages"].exists():
             DB["pages"].create(
-                    { "municipality": str, "body": str, "date": str, "page": int, "text": str},
-                pk=( "municipality","body", "date", "page"),
+                    { "municipality": str,
+                      "body": str,
+                      "date": str,
+                      "page": int,
+                      "text": str,
+                      "checksum": str
+                     },
+                pk=( "municipality","body", "date", "page", "checksum"),
             )
             DB["pages"].enable_fts(["text"], create_triggers=True)
 
@@ -72,6 +84,7 @@ class DatabaseOps():
         with self.SEMAPHORE:
             DB = self.DB
             config = self.config
+            checksum = str(self.doc_ops.get_checksum(Path(minutes_file)))
 
             # Must zoom in in order for tesseract to give mostly accurate transcription
             ZOOM = 2
@@ -89,26 +102,28 @@ class DatabaseOps():
             municipality = os.path.normpath(rel_doc_path).split(os.path.sep)[1].replace('_',' ')
             body = os.path.normpath(rel_doc_path).split(os.path.sep)[2].replace('_',' ')
             date = (os.path.split(Path(file))[1]).replace('-minutes.pdf','')
-            
-            print(f"{file}")
+            checksum_row_count = sum(1 for row in DB.query(f"select * from pages where checksum = '{checksum}'"))
 
-            for page in doc:
-                pix = page.get_pixmap(matrix=MAT)
-                image_bytes = io.BytesIO(
-                            pix.tobytes(output="jpeg", jpg_quality=98)
-                        )
-                page_image = Image.open(image_bytes)
-                page_text = pytesseract.image_to_string(page_image)
-                page_image.close()
-                DB["pages"].insert(
-                    {
-                        "municipality": municipality,
-                        "body": body,
-                        "date": date,
-                        "page": page.number,
-                        "text": page_text,
+            if checksum_row_count == 0 or self.args.force:
+                print(f"{file}")
+                for page in doc:
+                    pix = page.get_pixmap(matrix=MAT)
+                    image_bytes = io.BytesIO(
+                                pix.tobytes(output="jpeg", jpg_quality=98)
+                            )
+                    page_image = Image.open(image_bytes)
+                    page_text = pytesseract.image_to_string(page_image)
+                    page_image.close()
+                    DB["pages"].insert(
+                        {
+                            "municipality": municipality,
+                            "body": body,
+                            "date": date,
+                            "page": page.number,
+                            "text": page_text,
+                            "checksum": checksum,
 
-                    },
-                    replace=True,
-                )
+                        },
+                        replace=True,
+                    )
             doc.close()

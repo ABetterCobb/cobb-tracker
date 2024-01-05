@@ -4,6 +4,7 @@ import os
 import requests
 import concurrent.futures as cf
 from cobb_tracker.cobb_config import CobbConfig
+import hashlib
 
 class FileOps():
     def __init__(self,
@@ -49,7 +50,8 @@ class FileOps():
         doc_name=f"{doc_date}-{file_type}.pdf"
         doc_full_path=os.path.join(pdf_path,doc_name)
 
-        if not os.path.exists(doc_full_path):
+        args = self.config.args
+        if not os.path.exists(doc_full_path) or args.force:
             pdf_path.mkdir(parents=True, exist_ok=True)
             response = requests.get(file_url, headers={"User-Agent": self.user_agent})
 
@@ -73,6 +75,17 @@ class FileList():
     def __init__(self, minutes_dir: str) -> list:
         self.minutes_dir = minutes_dir 
 
+    
+    def get_checksum(self, minutes_file: Path):
+        BUFFER=(1024 ** 2) * 3
+        m = hashlib.sha256()
+        with open(minutes_file,'rb') as file:
+            while True:
+                chunk = file.read(BUFFER)
+                if not chunk:
+                    break
+                m.update(chunk)
+        return m.hexdigest()
     def minutes_files(self):
         all_files = []
         def list_all_files(path: str):
