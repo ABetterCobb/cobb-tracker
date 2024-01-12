@@ -23,7 +23,7 @@ from selenium.webdriver.support.ui import Select
 
 def signal_handler(signal, frame):
     subprocess.run(["sudo", "docker", "rm", "-f", "selenium"],
-                   stdout=subprocess.DEVNULL) 
+                   stdout=subprocess.DEVNULL)
     sys.exit(0)
 
 
@@ -33,10 +33,11 @@ def get_minutes_docs(config: CobbConfig):
     )
     signal.signal(signal.SIGINT, signal_handler)
     docker_location = shutil.which('docker')
+    if docker_location is None:
+        print("Error: Docker is not in PATH or not installed")
+        sys.exit()
+
     if sys.platform.startswith('linux'):
-        if docker_location is None:
-            print("Error: Docker is not in PATH or not installed")
-            sys.exit()
 
         try:
             subprocess.run(['sudo', 'systemctl', 'start', 'docker'])
@@ -52,10 +53,6 @@ def get_minutes_docs(config: CobbConfig):
             sys.exit()
 
     elif sys.platform.startswith('darwin'):
-        if docker_location is None:
-            print("Error: Docker is not in PATH or not installed")
-            sys.exit()
-
         try:
             subprocess.run(['docker', 'run',
                             '-p', '4444:4444',
@@ -64,7 +61,7 @@ def get_minutes_docs(config: CobbConfig):
                             '-d',
                             '--name', 'selenium',
                             '-it', 'selenium/standalone-chrome:latest'])
-    
+
         except Exception as e:
             print(f"Error: {e}")
             sys.exit()
@@ -122,7 +119,6 @@ def get_minutes_docs(config: CobbConfig):
                     minutes_urls[file_url]["date"] = parse_date(columns[0])
                     minutes_urls[file_url]["file_type"] = "minutes" 
 
-
             next_button = "//td[contains(@class, 'rgPagerCell NextPrevAndNumeric')]//div[contains(@class, 'rgWrap rgArrPart2')]/a[@href]"
             link = browser.find_element(By.XPATH,next_button)
             try:
@@ -147,4 +143,3 @@ def get_minutes_docs(config: CobbConfig):
                 config=config
                )
         doc_ops.write_minutes_doc()
-
