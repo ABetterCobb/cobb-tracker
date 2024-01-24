@@ -1,38 +1,31 @@
-[build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
-
-[project]
+[tool.poetry]
 name = "cobb-tracker"
-version = "0.0.1"
-authors = [
-  { name="GuyLiner", email="guyliner69@proton.me" },
-  { name="Tyler", email="placeholder@example.com" }
-]
-description = "Program that pulls meeting minutes for the various municipalities in Cobb County"
+version = "0.1.0"
+description = "A program to pull the meeting minutes for all the cities in Cobb County"
+authors = ["Guyliner <guyliner69@proton.me>"]
+license = "GPL-3.0-only"
 readme = "README.md"
-requires-python = ">=3.8"
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: GPL3 License",
-    "Operating System :: OS Independent",
-]
-dependencies = [
-  "PyMuPDF",
-  "sqlite_utils",
-  "requests",
-  "beautifulsoup4",
-  "numpy",
-  "Pillow",
-  "pytesseract",
-  "datasette",
-  "autocorrect",
-  "selenium"
-]
 
-[project.urls]
+[tool.poetry.dependencies]
+python = "^3.12"
+pymupdf = "^1.23.18"
+sqlite-utils = "^3.36"
+requests = "^2.31.0"
+beautifulsoup4 = "^4.12.3"
+numpy = "^1.26.3"
+pillow = "^10.2.0"
+pytesseract = "^0.3.10"
+datasette = "^0.64.6"
+autocorrect = "^2.6.1"
+selenium = "^4.17.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+cobb-tracker = 'cobb_tracker.__main__:main'
+
+[tool.poetry.urls]
 Homepage = "https://github.com/ABetterCobb/cobb-tracker"
 Issues = "https://github.com/ABetterCobb/cobb-tracker/issues"
-
-[project.scripts]
-cobb-tracker = "cobb_tracker.__main__:main"

@@ -12,6 +12,7 @@ from cobb_tracker.municipalities import (marietta,
 from cobb_tracker.pdf_parse import DatabaseOps
 from cobb_tracker.cobb_config import CobbConfig
 
+
 def choose_muni(municipality: str, config: CobbConfig):
     """Chooses what module to run base on the municipality that is entered
     Args:
