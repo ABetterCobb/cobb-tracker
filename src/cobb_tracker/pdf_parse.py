@@ -1,5 +1,6 @@
 import fitz
 import sys
+import logging
 import pytesseract
 
 from PIL import Image
@@ -42,7 +43,7 @@ class DatabaseOps():
         if tesseract_location is not None:
             pytesseract.pytesseract.tesseract_cmd = tesseract_location
         else:
-            print("Error: Tesseract is not in PATH or is not installed")
+            logging.error("Tesseract is not in PATH or is not installed")
             sys.exit()
 
     def pdf_to_database(self):
@@ -52,7 +53,7 @@ class DatabaseOps():
 
         all_minutes_files = np.array(doc_ops.minutes_files())
         if len(all_minutes_files) == 0:
-            print(f"Error: There are no minutes files in {self.MINUTES_DIR}!")
+            logging.error(f"There are no minutes files in {self.MINUTES_DIR}!")
             return
 
         if not DB["pages"].exists():
@@ -94,7 +95,7 @@ class DatabaseOps():
                 doc = fitz.open(file)
 
             except Exception as e:
-                print(f"Error: {e} {file}")
+                logging.error(f"{e} Unable to convert {file} to text")
                 return
 
             rel_doc_path=file.replace(config.get_config('directories','minutes_dir'),'')
@@ -104,7 +105,7 @@ class DatabaseOps():
             checksum_row_count = sum(1 for row in DB.query(f"select * from pages where checksum = '{checksum}'"))
 
             if checksum_row_count == 0 or self.args.force:
-                print(f"{file}")
+                logging.info(f"{file}")
                 for page in doc:
                     pix = page.get_pixmap(matrix=MAT)
                     image_bytes = io.BytesIO(

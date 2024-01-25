@@ -1,4 +1,5 @@
 from cobb_tracker import file_ops
+import logging
 from cobb_tracker.cobb_config import CobbConfig
 import requests
 import json
@@ -59,7 +60,7 @@ def get_minutes_docs(config: CobbConfig):
                 try:
                     event_type = body.lstrip().replace(' ','_')
                 except Exception as e:
-                    print(f"Error: couldn't retrieve for Event. \nID: {meeting_info['ID']} \nName: {body} {meeting_type} {e}")
+                    logging.error(f"Error: couldn't retrieve for Event. \nID: {meeting_info['ID']} \nName: {body} {meeting_type} {e}")
                     event_type = "misc"
 
                 event_date = datetime.fromisoformat(

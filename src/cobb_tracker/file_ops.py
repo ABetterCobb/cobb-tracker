@@ -1,4 +1,5 @@
 from pathlib import Path
+import logging
 import os
 import requests
 import concurrent.futures as cf
@@ -7,11 +8,11 @@ import hashlib
 
 class FileOps():
     def __init__(self,
-                session: requests.Session,
-                user_agent: str,
-                file_urls: dict,
-                config: CobbConfig
-                ):
+                 session: requests.Session,
+                 user_agent: str,
+                 file_urls: dict,
+                 config: CobbConfig
+                 ):
         """
         Args:
             session (requests.Session): requests session object
@@ -55,18 +56,15 @@ class FileOps():
             response = requests.get(file_url, headers={"User-Agent": self.user_agent})
 
             if not response.ok:
-                print(
-                    "Error retrieving minutes document:",
-                        meeting_type,
-                        doc_name,
-                        response.reason,
+                logging.error(
+                    f"Couldn't retrieve minutes document: {meeting_type} {doc_name} {response.reason}"
                 )
                 return
             pdf_file = response.content
 
             with open(pdf_path.joinpath(doc_name), "wb") as file:
                 file.write(pdf_file)
-                print(f"{doc_name} -> {pdf_path}/{doc_name}")
+                logging.info(f"{doc_name} -> {pdf_path}/{doc_name}")
         else:
             return
 
@@ -85,6 +83,7 @@ class FileList():
                     break
                 m.update(chunk)
         return m.hexdigest()
+
     def minutes_files(self):
         all_files = []
         def list_all_files(path: str):

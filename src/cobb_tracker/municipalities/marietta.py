@@ -1,4 +1,5 @@
 import requests
+import logging
 import re
 
 from cobb_tracker import file_ops
@@ -18,6 +19,7 @@ USER_AGENT = (
 
 RE_ALPHNUM = re.compile(r"[^a-zA-Z0-9]")
 RE_ALPHA = re.compile(r"[0-9\.\-]")
+
 
 def name_documents(session: requests.Session,
                           container_name: str,
@@ -44,8 +46,7 @@ def name_documents(session: requests.Session,
         month = minutes_name[1:3]
         day = minutes_name[3:5]
 
-        minutes_urls[url]["date"]=f"{year}-{month}-{day}"
-
+        minutes_urls[url]["date"] = f"{year}-{month}-{day}"
 
     doc_ops = file_ops.FileOps(
         session=session,
@@ -54,6 +55,7 @@ def name_documents(session: requests.Session,
         config=config
         )
     doc_ops.write_minutes_doc()
+
 
 def get_years(agenda_container: Tag) -> list[str]:
     """Find all the list items that define which years are available to filter on.
@@ -78,7 +80,7 @@ def get_minutes_docs(config: CobbConfig):
 
     response = session.get(URL_AGENDAS, headers={"User-Agent": USER_AGENT})
     if not response.ok:
-        print("Request failed:", response.reason, response.status_code)
+        logging.error("Request failed:", response.reason, response.status_code)
         return
 
     soup = BeautifulSoup(response.content, "html.parser")
@@ -95,7 +97,8 @@ def get_minutes_docs(config: CobbConfig):
         for year in year_list:
             payload = {"year": year, "catID": agenda_table_id}
             agendas = session.post(
-                URL_UPDATE_AGENDAS, headers={"User-Agent": USER_AGENT}, data=payload
+                URL_UPDATE_AGENDAS,
+                headers={"User-Agent": USER_AGENT}, data=payload
             )
             new_doc = BeautifulSoup(agendas.text, "html.parser")
             rows = new_doc.find_all("tr", class_="catAgendaRow")
@@ -117,12 +120,15 @@ def clean_name(input_string: str) -> str:
     """Use regex to replace non-alphanumeric characters with underscores
 
     Args:
-        input_string (str): String to clean and format, such as a meeting title._
+        input_string (str): String to clean and format, such as a
+        meeting title._
 
     Returns:
         str: Formatted string.
     """
-    # TODO: This is a little messy and leaves some errant "_" at the end of some folders.
+    # TODO:
+    # This is a little messy and leaves some errant "_" at
+    # the end of some folders.
     input_string = RE_ALPHA.sub("", input_string)
     result_string = (
         RE_ALPHNUM.sub("_", input_string).replace("__", "_").replace("__", "_")
