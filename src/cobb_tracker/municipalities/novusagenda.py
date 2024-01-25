@@ -1,8 +1,8 @@
-#!/usr/bin/env python
 import subprocess
 import re
 import shutil
 import time
+import logging
 
 
 import sys
@@ -34,7 +34,7 @@ def get_minutes_docs(config: CobbConfig):
     signal.signal(signal.SIGINT, signal_handler)
     docker_location = shutil.which('docker')
     if docker_location is None:
-        print("Error: Docker is not in PATH or not installed")
+        logging.error("Docker is not in PATH or not installed")
         sys.exit()
 
     if sys.platform.startswith('linux'):
@@ -49,7 +49,7 @@ def get_minutes_docs(config: CobbConfig):
                             '--name', 'selenium',
                             '-it', 'selenium/standalone-chrome:latest'])
         except Exception as e:
-            print(f"Error: {e}")
+            logging.error(f"{e}")
             sys.exit()
 
     elif sys.platform.startswith('darwin'):
@@ -63,10 +63,10 @@ def get_minutes_docs(config: CobbConfig):
                             '-it', 'selenium/standalone-chrome:latest'])
 
         except Exception as e:
-            print(f"Error: {e}")
+            logging.error(f"{e}")
             sys.exit()
     else:
-        print(f"Error: Unsupported platform {sys.platform}")
+        logging.error(f"Unsupported platform {sys.platform}")
 
     time.sleep(5)
     browser = webdriver.Remote(command_executor="http://localhost:4444", options=webdriver.ChromeOptions())

@@ -1,4 +1,5 @@
 import requests
+import logging
 import re
 
 from autocorrect import Speller
@@ -35,11 +36,11 @@ USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0"
     )
 def get_minutes_docs(config: CobbConfig):
-    archive_groups = {} 
+    archive_groups = {}
     response = session.get(LIST_OF_ARCHIVE_SECTIONS, headers={"User-Agent": USER_AGENT})
 
     if not response.ok:
-        print("Request failed:", response.reason, response.status_code)
+        logging.error("Request failed:", response.reason, response.status_code)
         return
 
     soup = BeautifulSoup(response.text, 'html.parser')
@@ -74,7 +75,7 @@ def get_meeting_info(archive_groups: dict):
             archive_page_response = session.get(group_page, headers={"User-Agent": USER_AGENT})
 
             if not archive_page_response.ok:
-                print("Request failed:", archive_page_response.reason, archive_page_response.status_code)
+                logging.error("Request failed:", archive_page_response.reason, archive_page_response.status_code)
                 return
 
             archive_page = BeautifulSoup(archive_page_response.text, 'html.parser')
@@ -124,7 +125,7 @@ def get_meeting_info(archive_groups: dict):
                                 singular_page = session.get(f"{FILE_PAGE}{file_id}", headers={"User-Agent": USER_AGENT})
 
                                 if not singular_page.ok:
-                                    print("Request failed:", singular_page.reason, singular_page.status_code)
+                                    logging.error("Request failed:", singular_page.reason, singular_page.status_code)
                                     return
                                 singular_page_text = BeautifulSoup(singular_page.text, 'html.parser')
                                 links = singular_page_text.find_all("a")

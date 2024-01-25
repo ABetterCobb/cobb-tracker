@@ -1,4 +1,5 @@
 from cobb_tracker import file_ops
+import logging
 from cobb_tracker.cobb_config import CobbConfig
 import requests
 import json
@@ -45,7 +46,7 @@ class CivicPlus:
             try:
                 event_type = event["categoryName"].lstrip().replace(' ','_')
             except Exception as e:
-                print(f"Error: couldn't retrieve categoryName for Event. \nID: {event['id']} \nName: {event['eventName']} {e} ")
+                logging.error(f"couldn't retrieve categoryName for Event. \nID: {event['id']} \nName: {event['eventName']} {e} ")
                 event_type = "misc"
 
             event_date = datetime.fromisoformat(

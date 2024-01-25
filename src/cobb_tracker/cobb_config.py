@@ -1,4 +1,5 @@
 import configparser
+import logging
 import sys
 from pathlib import Path
 import argparse
@@ -32,16 +33,16 @@ class CobbConfig():
                 self.config.write(config_file)
 
         elif self.DEFAULT_CONFIG_FILE.exists():
-            self.config.read(self.DEFAULT_CONFIG_FILE) 
+            self.config.read(self.DEFAULT_CONFIG_FILE)
             if len(self.config.sections()) == 0:
-                print("Error: Configuration file incorrect")
+                logging.error("Configuration file incorrect")
                 sys.exit()
             elif len(self.config.sections()) > 0:
                 try:
                     Path(self.config.get('directories','database_dir')).mkdir(parents=True,exist_ok=True)
                     Path(self.config.get('directories','minutes_dir')).mkdir(parents=True,exist_ok=True)
                 except Exception as e:
-                    print(f"Error: {e}, is your configuration correctly formatted?")
+                    logging.error(f"{e}, is your configuration correctly formatted?")
                     sys.exit()
     def get_config(self, section: str, key: str) -> str:
         return self.config[section][key]

@@ -1,4 +1,5 @@
 
+import logging
 import requests
 
 
@@ -26,7 +27,7 @@ def get_minutes_docs(config: CobbConfig):
         response = session.get(page, headers={"User-Agent": USER_AGENT})
 
         if not response.ok:
-            print("Request failed:", response.reason, response.status_code)
+            logging.error("Request failed:", response.reason, response.status_code)
             return
         current_minutes_page = BeautifulSoup(response.text, 'html.parser')
         years_container = current_minutes_page.find("div",class_="mcms_RendererContentDetail")
