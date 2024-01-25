@@ -7,7 +7,7 @@ license = "GPL-3.0-only"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.11"
 pymupdf = "^1.23.18"
 sqlite-utils = "^3.36"
 requests = "^2.31.0"
