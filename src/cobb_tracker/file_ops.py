@@ -6,13 +6,15 @@ import concurrent.futures as cf
 from cobb_tracker.cobb_config import CobbConfig
 import hashlib
 
-class FileOps():
-    def __init__(self,
-                 session: requests.Session,
-                 user_agent: str,
-                 file_urls: dict,
-                 config: CobbConfig
-                 ):
+
+class FileOps:
+    def __init__(
+        self,
+        session: requests.Session,
+        user_agent: str,
+        file_urls: dict,
+        config: CobbConfig,
+    ):
         """
         Args:
             session (requests.Session): requests session object
@@ -29,26 +31,30 @@ class FileOps():
     def write_minutes_doc(self):
         with cf.ThreadPoolExecutor(max_workers=self.maxconnections) as executor:
             # Start the load operations and mark each future with its URL
-            future_to_url = {executor.submit(self.pull_minutes_doc, url): url for url in self.file_urls}
+            future_to_url = {
+                executor.submit(self.pull_minutes_doc, url): url
+                for url in self.file_urls
+            }
             for _ in cf.as_completed(future_to_url):
                 pass
 
     def pull_minutes_doc(self, url: str):
-        url = ''.join(map(str, url))
+        url = "".join(map(str, url))
         municipality = self.file_urls[url]["municipality"]
         meeting_type = self.file_urls[url]["meeting_name"]
         file_url = url
         doc_date = self.file_urls[url]["date"]
         file_type = self.file_urls[url]["file_type"]
         pdf_path = Path(
-                    Path(self.config.get_config("directories", "minutes_dir"))
-                    .joinpath(municipality,meeting_type)
-                    )
-        #normalize
+            Path(self.config.get_config("directories", "minutes_dir")).joinpath(
+                municipality, meeting_type
+            )
+        )
+        # normalize
         meeting_type = meeting_type.lower()
 
-        doc_name=f"{doc_date}-{file_type}.pdf"
-        doc_full_path=os.path.join(pdf_path,doc_name)
+        doc_name = f"{doc_date}-{file_type}.pdf"
+        doc_full_path = os.path.join(pdf_path, doc_name)
 
         args = self.config.args
         if not os.path.exists(doc_full_path) or args.force:
@@ -68,15 +74,15 @@ class FileOps():
         else:
             return
 
-class FileList():        
-    def __init__(self, minutes_dir: str) -> list:
-        self.minutes_dir = minutes_dir 
 
-    
+class FileList:
+    def __init__(self, minutes_dir: str) -> list:
+        self.minutes_dir = minutes_dir
+
     def get_checksum(self, minutes_file: Path):
-        BUFFER=(1024 ** 2) * 3
+        BUFFER = (1024**2) * 3
         m = hashlib.sha256()
-        with open(minutes_file,'rb') as file:
+        with open(minutes_file, "rb") as file:
             while True:
                 chunk = file.read(BUFFER)
                 if not chunk:
@@ -86,11 +92,13 @@ class FileList():
 
     def minutes_files(self):
         all_files = []
+
         def list_all_files(path: str):
             for entry in os.scandir(path):
                 if entry.is_file():
                     all_files.append(entry.path)
                 if entry.is_dir():
                     list_all_files(entry)
+
         list_all_files(self.minutes_dir)
         return all_files

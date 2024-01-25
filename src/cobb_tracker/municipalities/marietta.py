@@ -21,10 +21,12 @@ RE_ALPHNUM = re.compile(r"[^a-zA-Z0-9]")
 RE_ALPHA = re.compile(r"[0-9\.\-]")
 
 
-def name_documents(session: requests.Session,
-                          container_name: str,
-                          config: CobbConfig,
-                          minutes_urls: dict) -> None:
+def name_documents(
+    session: requests.Session,
+    container_name: str,
+    config: CobbConfig,
+    minutes_urls: dict,
+) -> None:
     """Parse meeting information and documents from a table row.
 
     Args:
@@ -36,10 +38,12 @@ def name_documents(session: requests.Session,
         meeting_title = row.find("a", {"aria-describedby": True}, target="_blank")
         if meeting_title is None:
             return
-        minutes_urls[url]["meeting_name"] = clean_name(meeting_title.text.strip().title())
-        minutes_urls[url]["municipality"] = "Marietta" 
+        minutes_urls[url]["meeting_name"] = clean_name(
+            meeting_title.text.strip().title()
+        )
+        minutes_urls[url]["municipality"] = "Marietta"
         minutes_urls[url]["file_type"] = "minutes"
-        
+
         minutes_name = url.split("/")[-1]
 
         year = minutes_name[5:9]
@@ -49,11 +53,8 @@ def name_documents(session: requests.Session,
         minutes_urls[url]["date"] = f"{year}-{month}-{day}"
 
     doc_ops = file_ops.FileOps(
-        session=session,
-        user_agent=USER_AGENT,
-        file_urls=minutes_urls,
-        config=config
-        )
+        session=session, user_agent=USER_AGENT, file_urls=minutes_urls, config=config
+    )
     doc_ops.write_minutes_doc()
 
 
@@ -74,6 +75,7 @@ def get_years(agenda_container: Tag) -> list[str]:
             filtered_year_list.append(entry_string)
     return filtered_year_list
 
+
 def get_minutes_docs(config: CobbConfig):
     minutes_urls = {}
     session = requests.Session()
@@ -87,7 +89,7 @@ def get_minutes_docs(config: CobbConfig):
     agenda_containers = soup.find_all("div", class_="listing listingCollapse noHeader")
     for container in agenda_containers:
         year_list = get_years(container)
-        container_name = (container.find("h2", tabindex="0").text).replace(' ','_')[1:]
+        container_name = (container.find("h2", tabindex="0").text).replace(" ", "_")[1:]
         agenda_table_id = re.sub(
             r"[a-zA-Z]",
             "",
@@ -97,8 +99,7 @@ def get_minutes_docs(config: CobbConfig):
         for year in year_list:
             payload = {"year": year, "catID": agenda_table_id}
             agendas = session.post(
-                URL_UPDATE_AGENDAS,
-                headers={"User-Agent": USER_AGENT}, data=payload
+                URL_UPDATE_AGENDAS, headers={"User-Agent": USER_AGENT}, data=payload
             )
             new_doc = BeautifulSoup(agendas.text, "html.parser")
             rows = new_doc.find_all("tr", class_="catAgendaRow")
@@ -114,7 +115,8 @@ def get_minutes_docs(config: CobbConfig):
         session=session,
         container_name=container_name,
         config=config,
-        )
+    )
+
 
 def clean_name(input_string: str) -> str:
     """Use regex to replace non-alphanumeric characters with underscores
