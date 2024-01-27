@@ -1,21 +1,26 @@
-import requests
+"""
+Marietta uses CivicPlus, but the platform is different
+because it was bought out by civilplus and not
+originally made by them.
+
+Files are pulled from the "Agenda Center"
+https://www.mariettaga.gov/AgendaCenter
+""" 
 import logging
 import re
 
-from cobb_tracker import file_ops
-from cobb_tracker.cobb_config import CobbConfig
-
-
+import requests
 from bs4.element import Tag
 from bs4 import BeautifulSoup
+
+from cobb_tracker import file_ops
+from cobb_tracker.cobb_config import CobbConfig
 
 URL_BASE = "https://www.mariettaga.gov"
 URL_AGENDAS = f"{URL_BASE}/AgendaCenter"
 URL_UPDATE_AGENDAS = f"{URL_BASE}/AgendaCenter/UpdateCategoryList"
 
-USER_AGENT = (
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0"
-)
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0"
 
 RE_ALPHNUM = re.compile(r"[^a-zA-Z0-9]")
 RE_ALPHA = re.compile(r"[0-9\.\-]")
@@ -35,7 +40,9 @@ def name_documents(
     """
     for url in minutes_urls.keys():
         row = minutes_urls[url]
-        meeting_title = row.find("a", {"aria-describedby": True}, target="_blank")
+        meeting_title = row.find(
+            "a", {"aria-describedby": True}, target="_blank"
+        )
         if meeting_title is None:
             return
         minutes_urls[url]["meeting_name"] = clean_name(
@@ -53,7 +60,10 @@ def name_documents(
         minutes_urls[url]["date"] = f"{year}-{month}-{day}"
 
     doc_ops = file_ops.FileOps(
-        session=session, user_agent=USER_AGENT, file_urls=minutes_urls, config=config
+        session=session,
+        user_agent=USER_AGENT,
+        file_urls=minutes_urls,
+        config=config,
     )
     doc_ops.write_minutes_doc()
 
@@ -82,14 +92,20 @@ def get_minutes_docs(config: CobbConfig):
 
     response = session.get(URL_AGENDAS, headers={"User-Agent": USER_AGENT})
     if not response.ok:
-        logging.error("Request failed:", response.reason, response.status_code)
+        logging.error(
+            f"Request failed: {response.reason} {response.status_code}"
+        )
         return
 
     soup = BeautifulSoup(response.content, "html.parser")
-    agenda_containers = soup.find_all("div", class_="listing listingCollapse noHeader")
+    agenda_containers = soup.find_all(
+        "div", class_="listing listingCollapse noHeader"
+    )
     for container in agenda_containers:
         year_list = get_years(container)
-        container_name = (container.find("h2", tabindex="0").text).replace(" ", "_")[1:]
+        container_name = (container.find("h2", tabindex="0").text).replace(
+            " ", "_"
+        )[1:]
         agenda_table_id = re.sub(
             r"[a-zA-Z]",
             "",
@@ -99,7 +115,9 @@ def get_minutes_docs(config: CobbConfig):
         for year in year_list:
             payload = {"year": year, "catID": agenda_table_id}
             agendas = session.post(
-                URL_UPDATE_AGENDAS, headers={"User-Agent": USER_AGENT}, data=payload
+                URL_UPDATE_AGENDAS,
+                headers={"User-Agent": USER_AGENT},
+                data=payload,
             )
             new_doc = BeautifulSoup(agendas.text, "html.parser")
             rows = new_doc.find_all("tr", class_="catAgendaRow")

@@ -1,23 +1,24 @@
-from cobb_tracker import file_ops
-from cobb_tracker.cobb_config import CobbConfig
-import requests
-import json
-import re
-
-from datetime import datetime
-
-
-"""Smyrna's website (https://smyrnaga.primegov.com) is powered by PrimeGov. 
+"""Smyrna's website (https://smyrnaga.primegov.com) is powered by PrimeGov.
    As of 2023-12-26 we have access the API
 """
+
+import json
+import re
+from datetime import datetime
+
+import requests
+
+from cobb_tracker import file_ops
+from cobb_tracker.cobb_config import CobbConfig
+
 BASE_URL = "https://smyrnaga.primegov.com/api/v2/PublicPortal"
 MEETINGS_URL = f"{BASE_URL}/ListArchivedMeetings?year="
-MINUTES_URL = "https://smyrnaga.primegov.com/Public/CompiledDocument?meetingTemplateId="
+MINUTES_URL = (
+    "https://smyrnaga.primegov.com/Public/CompiledDocument?meetingTemplateId="
+)
 # [num]&compileOutputType=1
 
-USER_AGENT = (
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0"
-)
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0"
 
 
 def get_all_events(session: requests.Session) -> dict:
@@ -56,9 +57,9 @@ def get_minutes_docs(config: CobbConfig):
 
     for year in event_data:
         for event in event_data[year]:
-            event_date = datetime.strptime(event["date"], "%b %d, %Y").strftime(
-                "%Y-%m-%d"
-            )
+            event_date = datetime.strptime(
+                event["date"], "%b %d, %Y"
+            ).strftime("%Y-%m-%d")
 
             for file in event["documentList"]:
                 if file["templateName"] == "Minutes":
@@ -71,13 +72,16 @@ def get_minutes_docs(config: CobbConfig):
                     file_url = f"{MINUTES_URL}{file['templateId']}"
                     minutes_urls[file_url] = {}
                     minutes_urls[file_url]["municipality"] = "Smyrna"
-                    minutes_urls[file_url]["meeting_name"] = event_title.replace(
-                        " ", "_"
-                    )
+                    minutes_urls[file_url][
+                        "meeting_name"
+                    ] = event_title.replace(" ", "_")
                     minutes_urls[file_url]["date"] = event_date
                     minutes_urls[file_url]["file_type"] = "minutes"
 
     doc_ops = file_ops.FileOps(
-        file_urls=minutes_urls, session=session, user_agent=USER_AGENT, config=config
+        file_urls=minutes_urls,
+        session=session,
+        user_agent=USER_AGENT,
+        config=config,
     )
     doc_ops.write_minutes_doc()

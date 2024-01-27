@@ -1,10 +1,14 @@
-from cobb_tracker import file_ops
+"""
+CivicPlus handles Kennesaw and Cobb County
+"""
 import logging
-from cobb_tracker.cobb_config import CobbConfig
-import requests
-import json
-
 from datetime import datetime
+
+import json
+import requests
+
+from cobb_tracker import file_ops
+from cobb_tracker.cobb_config import CobbConfig
 
 
 class CivicPlus:
@@ -18,12 +22,15 @@ class CivicPlus:
 
     def get_all_events(self, session: requests.Session) -> dict:
         """BASE_URL is the base url where events
-        are being pulled from. The page will only give you 15 events at a time, and
-        the link to get the next 15 is contained in @odata.nextLink
+        are being pulled from. The page will only give you
+        15 events at a time, and the link to get the next
+        15 is contained in @odata.nextLink
 
         """
         raw_event_page = json.loads(
-            session.get(self.EVENTS_URL, headers={"User-Agent": self.USER_AGENT}).text
+            session.get(
+                self.EVENTS_URL, headers={"User-Agent": self.USER_AGENT}
+            ).text
         )
         event_list = raw_event_page["value"]
         next_event_set_link = raw_event_page["@odata.nextLink"]
@@ -31,7 +38,8 @@ class CivicPlus:
         while True:
             next_event_list = json.loads(
                 session.get(
-                    next_event_set_link, headers={"User-Agent": self.USER_AGENT}
+                    next_event_set_link,
+                    headers={"User-Agent": self.USER_AGENT},
                 ).text
             )
             event_list = event_list + next_event_list["value"]
@@ -49,11 +57,14 @@ class CivicPlus:
                 event_type = event["categoryName"].lstrip().replace(" ", "_")
             except Exception as e:
                 logging.error(
-                    f"couldn't retrieve categoryName for Event. \nID: {event['id']} \nName: {event['eventName']} {e} "
+                    "couldn't retrieve categoryName for Event." +
+                    f"\nID: {event['id']} \nName: {event['eventName']} {e} "
                 )
                 event_type = "misc"
 
-            event_date = datetime.fromisoformat(event["eventDate"]).strftime("%Y-%m-%d")
+            event_date = datetime.fromisoformat(event["eventDate"]).strftime(
+                "%Y-%m-%d"
+            )
             for file in event["publishedFiles"]:
                 file_url = f"{self.MEETINGS_URL}GetMeetingFileStream(fileId={file['fileId']},plainText=false)"
                 if file["type"] == "Minutes":

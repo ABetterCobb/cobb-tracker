@@ -1,14 +1,28 @@
-import requests
+"""
+Powder Springs uses CivicPlus as well, but just like Marietta
+the backend is not the same as Cobb County or Smyrna.
+
+Unlike any other city though, the data is archived with
+inconsistent date formatting and behind multiple links.
+
+The solution to this was to create a long catchall regex
+pattern that would match a variation of date formats, in
+the future this could easily break though.
+
+In addtion, there was also at least one instance of a file
+having no date data whatsoever.
+"""
 import logging
 import re
 
 from autocorrect import Speller
+from bs4 import BeautifulSoup
+import requests
 
 from cobb_tracker import file_ops
 from cobb_tracker.cobb_config import CobbConfig
 from cobb_tracker.string_ops import parse_date
 
-from bs4 import BeautifulSoup
 
 URL_BASE = "https://cityofpowdersprings.org/"
 LIST_OF_ARCHIVE_SECTIONS = f"{URL_BASE}Archive.aspx"
@@ -34,14 +48,14 @@ get_year = re.compile(
     r"((\b(?:(Jan|JAN)(?:uary)?|(FEB|Feb)(?:ruary)?|(Mar|MAR)(?:ch)?|(Apr|APRIL)(?:il)?|(May|MAY)|(Jun|JUNE)(?:e)?|(JULY|Jul)(?:y)?|(AUG|Aug)(?:ust)?|(Sep|Sept|SEPT)(?:tember)?|(OCT|Oct)(?:ober)?|(Nov|NOV|Dec|DEC|DECEMBER)(?:ember)?)\s?(\.|,)?\s?(\d{1,2}\D?)?\D?\s?((19[7-9]\d|20\d{2})))|(\d{1,2}(\.|/|-|,)\s?\d{1,2}(\.|/|-|,)\s?\d{2,4})|([0-1][1-9][0-2][0-9][0-9][0-9])|((JAN|JANUARY)\s{1,2}\d{1,2},\s\d{2}))"
 )
 
-USER_AGENT = (
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0"
-)
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0"
 
 
 def get_minutes_docs(config: CobbConfig):
     archive_groups = {}
-    response = session.get(LIST_OF_ARCHIVE_SECTIONS, headers={"User-Agent": USER_AGENT})
+    response = session.get(
+        LIST_OF_ARCHIVE_SECTIONS, headers={"User-Agent": USER_AGENT}
+    )
 
     if not response.ok:
         logging.error("Request failed:", response.reason, response.status_code)
@@ -59,7 +73,10 @@ def get_minutes_docs(config: CobbConfig):
     get_meeting_info(archive_groups)
 
     doc_ops = file_ops.FileOps(
-        file_urls=minutes_urls, session=session, user_agent=USER_AGENT, config=config
+        file_urls=minutes_urls,
+        session=session,
+        user_agent=USER_AGENT,
+        config=config,
     )
     doc_ops.write_minutes_doc()
 
@@ -86,30 +103,36 @@ def get_meeting_info(archive_groups: dict):
                 )
                 return
 
-            archive_page = BeautifulSoup(archive_page_response.text, "html.parser")
+            archive_page = BeautifulSoup(
+                archive_page_response.text, "html.parser"
+            )
             """
             On this "archive_page" , there is a span tag for every link.
             The titles of said links are the only date information
             that is available for these meetings without actually looking
             in the file. The dates are in many different formats, and need
-            to be parsed. 
+            to be parsed.
 
-            If a date cannot be parsed, due to a typo or 
+            If a date cannot be parsed, due to a typo or
             a date just not existing, we check the actual page for the
-            individual PDF and see if that has date information. 
+            individual PDF and see if that has date information.
             If that doesn't work the file has no date.
             """
 
             all_meetings = archive_page.find_all("span", class_="archive")
 
             for span in all_meetings:
-                lines = [line for line in span.text.split("\n") if line.strip()]
+                lines = [
+                    line for line in span.text.split("\n") if line.strip()
+                ]
                 link = span.find("a")
                 name = span.find("span")
 
                 if link is not None and name is not None:
                     if "agenda" not in name.text.lower():
-                        file_id = re.sub(r"[a-zA-Zw\.\?=]", "", link.get("href"))
+                        file_id = re.sub(
+                            r"[a-zA-Zw\.\?=]", "", link.get("href")
+                        )
                         file_url = f"{BASE_FILE_URL}{file_id}"
 
                         minutes_urls[file_url] = {}
@@ -124,7 +147,9 @@ def get_meeting_info(archive_groups: dict):
                         date = get_year.search(str(name.text))
 
                         if date is not None:
-                            minutes_urls[file_url]["date"] = parse_date(date.group(0))
+                            minutes_urls[file_url]["date"] = parse_date(
+                                date.group(0)
+                            )
 
                         else:
                             corrected_title = spell(name.text)
@@ -155,7 +180,9 @@ def get_meeting_info(archive_groups: dict):
 
                                 for link in links:
                                     if link.get("href") is not None:
-                                        if "ArchiveCenter" in (link.get("href")):
+                                        if "ArchiveCenter" in (
+                                            link.get("href")
+                                        ):
                                             link_text = link.text
                                             lines = link_text.split("\n")
                                             filtered_link_text = [

@@ -1,9 +1,10 @@
+"""
+Austell
+"""
 import logging
 import requests
 
-
 from cobb_tracker.string_ops import parse_date
-
 from cobb_tracker import file_ops
 from cobb_tracker.cobb_config import CobbConfig
 
@@ -20,9 +21,7 @@ muni = "Austell"
 session = requests.Session()
 
 
-USER_AGENT = (
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0"
-)
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0"
 
 
 def get_minutes_docs(config: CobbConfig):
@@ -31,7 +30,9 @@ def get_minutes_docs(config: CobbConfig):
         response = session.get(page, headers={"User-Agent": USER_AGENT})
 
         if not response.ok:
-            logging.error("Request failed:", response.reason, response.status_code)
+            logging.error(
+                f"Request failed: {response.reason} {response.status_code}"
+            )
             return
         current_minutes_page = BeautifulSoup(response.text, "html.parser")
         years_container = current_minutes_page.find(
@@ -57,6 +58,9 @@ def get_minutes_docs(config: CobbConfig):
         minutes_urls[url]["file_type"] = "minutes"
 
     doc_ops = file_ops.FileOps(
-        file_urls=minutes_urls, session=session, user_agent=USER_AGENT, config=config
+        file_urls=minutes_urls,
+        session=session,
+        user_agent=USER_AGENT,
+        config=config,
     )
     doc_ops.write_minutes_doc()

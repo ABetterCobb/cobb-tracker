@@ -1,3 +1,6 @@
+"""
+Entry point for cobb-tracker
+"""
 import sys
 import logging
 import os
@@ -41,7 +44,8 @@ def choose_muni(municipality: str, config: CobbConfig):
 
     if muni == "kennesaw" or config.args.pull_all_cities:
         kennesaw_civic = civicplus.CivicPlus(
-            base_url="https://kennesawga.api.civicclerk.com/v1", muni="Kennesaw"
+            base_url="https://kennesawga.api.civicclerk.com/v1",
+            muni="Kennesaw"
         )
         kennesaw_civic.get_minutes_docs(config=config)
         novusagenda.get_minutes_docs(config=config)
@@ -51,6 +55,8 @@ def choose_muni(municipality: str, config: CobbConfig):
 
 
 def main():
+    """Start point of the program
+    """
     if os.name != "posix":
         logging.error("cobb-tracker will only work Unix-like systems")
         sys.exit()
@@ -59,38 +65,47 @@ def main():
         "-m",
         "--municipality",
         type=str,
+        help="The city that you want to download minutes for" +
+             ". This includes Cobb."
     )
     parser.add_argument(
         "-p",
         "--push-to-database",
         action="store_true",
+        help="The existing minutes that you have will be converted " +
+             "to text and pushed to a database"
     )
     parser.add_argument(
         "-a",
         "--pull-all-cities",
         action="store_true",
+        help="All cities will have their minutes downloaded"
     )
     parser.add_argument(
         "-f",
         "--force",
         action="store_true",
+        help="Force rewriting of minutes files that already exist"
     )
 
     parser.add_argument(
         "-v",
         "--verbose",
         action="store_true",
+        help="More information will be printed"
     )
 
     args = parser.parse_args()
 
     if args.verbose:
         logging.basicConfig(
-            format="%(levelname)s: %(message)s", encoding="utf-8", level=logging.INFO
+            format="%(levelname)s: %(message)s",
+            encoding="utf-8", level=logging.INFO
         )
     else:
         logging.basicConfig(
-            format="%(levelname)s: %(message)s", encoding="utf-8", level=logging.WARNING
+            format="%(levelname)s: %(message)s",
+            encoding="utf-8", level=logging.WARNING
         )
 
     if (
@@ -99,7 +114,8 @@ def main():
         and args.pull_all_cities is None
     ):
         logging.error(
-            "You must specify -m/--municipality if -p/--push-to-database is not selected"
+            "You must specify -m/--municipality" +
+            "if -p/--push-to-database is not selected"
         )
         sys.exit()
 

@@ -1,11 +1,12 @@
-from cobb_tracker import file_ops
-import logging
-from cobb_tracker.cobb_config import CobbConfig
-import requests
-import json
-
 from datetime import datetime
 import concurrent.futures as cf
+import logging
+
+import json
+import requests
+
+from cobb_tracker.cobb_config import CobbConfig
+from cobb_tracker import file_ops
 
 BASE_URL = "https://acworthcityga.iqm2.com/"
 # Agenda is type 15, then you specify the ID
@@ -13,9 +14,7 @@ BASE_FILE_URL = f"{BASE_URL}Citizens/FileOpen.aspx?"
 STARTUP_URL = f"{BASE_URL}/api/Agency/StartupData"
 MEETINGS_URL = f"{BASE_URL}api/Meeting?"
 
-USER_AGENT = (
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0"
-)
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0"
 
 
 def get_all_events(session: requests.Session) -> list:
@@ -60,6 +59,10 @@ def get_all_events(session: requests.Session) -> list:
 
 
 def get_minutes_docs(config: CobbConfig):
+    """
+    This will format the data and pass it off FileOps to be downloaded
+    and written to the filesystem
+    """
     minutes_urls = {}
     session = requests.Session()
     for event_list in get_all_events(session):
@@ -76,9 +79,9 @@ def get_minutes_docs(config: CobbConfig):
                     )
                     event_type = "misc"
 
-                event_date = datetime.fromisoformat(meeting_info["Date"]).strftime(
-                    "%Y-%m-%d"
-                )
+                event_date = datetime.fromisoformat(
+                    meeting_info["Date"]
+                ).strftime("%Y-%m-%d")
 
                 file_url = f"{event['Minutes']['Documents'][0]['DownloadURL']}"
                 minutes_urls[file_url] = {}

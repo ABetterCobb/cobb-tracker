@@ -1,22 +1,25 @@
-import fitz
+"""
+This module handles the conversion of PDFs to
+text, as well as the operations for putting this text
+into the database
+"""
 import sys
-import logging
-import pytesseract
-
-from PIL import Image
-from sqlite_utils import Database
 import io
-
-from pathlib import Path
 import os
+import logging
+from pathlib import Path
 from multiprocessing import Process
 from multiprocessing import Semaphore
-
 import shutil
+import math
+
+import pytesseract
+import fitz
+from PIL import Image
+from sqlite_utils import Database
 import numpy as np
 
 from cobb_tracker import file_ops
-import math
 from cobb_tracker.cobb_config import CobbConfig
 
 
@@ -33,6 +36,8 @@ class DatabaseOps:
         self.DB = Database(Path(self.DATABASE_DIR).joinpath("minutes.db"))
 
         self.args = config.args
+        self.ZOOM = 2
+        self.MAT = fitz.Matrix(self.ZOOM, self.ZOOM)
 
         self.doc_ops = file_ops.FileList(
             minutes_dir=config.get_config("directories", "minutes_dir")
@@ -86,36 +91,41 @@ class DatabaseOps:
                 process.join()
 
     def write_to_database(self, minutes_file: str):
+        """
+            Converts meeting minutes PDFs to text and inserts them into
+            an SQLite3 database
+        `"""
         with self.SEMAPHORE:
-            DB = self.DB
-            config = self.config
             checksum = str(self.doc_ops.get_checksum(Path(minutes_file)))
 
-            # Must zoom in in order for tesseract to give mostly accurate transcription
-            ZOOM = 2
-            MAT = fitz.Matrix(ZOOM, ZOOM)
+            # Must zoom in in order for tesseract to give
+            # mostly accurate transcription
             file = str(minutes_file)
 
             try:
                 doc = fitz.open(file)
 
-            except Exception as e:
-                logging.error(f"{e} Unable to convert {file} to text")
+            except Exception as error:
+                logging.error(f"{error} Unable to convert {file} to text")
                 return
 
             rel_doc_path = file.replace(
-                config.get_config("directories", "minutes_dir"), ""
+                self.config.get_config("directories", "minutes_dir"), ""
             )
             municipality = (
-                os.path.normpath(rel_doc_path).split(os.path.sep)[1].replace("_", " ")
+                os.path.normpath(rel_doc_path)
+                .split(os.path.sep)[1]
+                .replace("_", " ")
             )
             body = (
-                os.path.normpath(rel_doc_path).split(os.path.sep)[2].replace("_", " ")
+                os.path.normpath(rel_doc_path)
+                .split(os.path.sep)[2]
+                .replace("_", " ")
             )
             date = (os.path.split(Path(file))[1]).replace("-minutes.pdf", "")
             checksum_row_count = sum(
                 1
-                for row in DB.query(
+                for row in self.DB.query(
                     f"select * from pages where checksum = '{checksum}'"
                 )
             )
@@ -123,12 +133,17 @@ class DatabaseOps:
             if checksum_row_count == 0 or self.args.force:
                 logging.info(f"{file}")
                 for page in doc:
-                    pix = page.get_pixmap(matrix=MAT)
-                    image_bytes = io.BytesIO(pix.tobytes(output="jpeg", jpg_quality=98))
+                    pix = page.get_pixmap(matrix=self.MAT)
+
+                    image_bytes = io.BytesIO(
+                        pix.tobytes(output="jpeg", jpg_quality=98)
+                    )
+
                     page_image = Image.open(image_bytes)
                     page_text = pytesseract.image_to_string(page_image)
                     page_image.close()
-                    DB["pages"].insert(
+
+                    self.DB["pages"].insert(
                         {
                             "municipality": municipality,
                             "body": body,

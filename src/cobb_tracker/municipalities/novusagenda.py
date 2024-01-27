@@ -1,27 +1,51 @@
+"""
+This was specifically made for Kennesaw's old site
+which was hosted with NovusAgenda, however this should
+work pretty easily with almost any other NovusAgenda site.
+
+From about a dozen other ones that I've looked at they all
+have essentially the same interface.
+
+However, there is no API to interface with and most things
+are handled with javascript so Selenium had to be used.
+
+To make this more reproducable and less error prone, I used the
+selenium docker image with a remote web driver for scraping.
+
+This means the scraper runs "headlessly", since it's not
+directly running on the host.  This also means you can
+open up a web browser and watch the what the docker
+container is doing in real time
+
+The instructions should be at this link under the section
+"Using a VNC client"
+
+https://github.com/SeleniumHQ/docker-selenium
+"""
 import subprocess
 import re
+from datetime import datetime
 import shutil
 import time
 import logging
-
-
 import sys
-from datetime import datetime
-from cobb_tracker.string_ops import parse_date
-
-import requests
-from cobb_tracker.file_ops import FileOps
-from cobb_tracker.cobb_config import CobbConfig
+import signal
 
 from selenium.common.exceptions import ElementNotInteractableException
 from selenium import webdriver
-import signal
-
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
+import requests
+
+from cobb_tracker.file_ops import FileOps
+from cobb_tracker.cobb_config import CobbConfig
+from cobb_tracker.string_ops import parse_date
 
 
 def signal_handler(signal, frame):
+    """
+    Clean exit if user tries to kill the program
+    """
     subprocess.run(
         ["sudo", "docker", "rm", "-f", "selenium"], stdout=subprocess.DEVNULL
     )
@@ -87,7 +111,8 @@ def get_minutes_docs(config: CobbConfig):
 
     time.sleep(5)
     browser = webdriver.Remote(
-        command_executor="http://localhost:4444", options=webdriver.ChromeOptions()
+        command_executor="http://localhost:4444",
+        options=webdriver.ChromeOptions(),
     )
     try:
         browser.get("https://kennesaw.novusagenda.com/agendapublic")
@@ -95,7 +120,8 @@ def get_minutes_docs(config: CobbConfig):
         time.sleep(5)
         drop_down = Select(
             browser.find_element(
-                By.ID, "ctl00_ContentPlaceHolder1_SearchAgendasMeetings_ddlDateRange"
+                By.ID,
+                "ctl00_ContentPlaceHolder1_SearchAgendasMeetings_ddlDateRange",
             )
         )
         drop_down.select_by_visible_text("Custom Date Range")
@@ -116,7 +142,8 @@ def get_minutes_docs(config: CobbConfig):
         start_date.send_keys(datetime.strftime(datetime.now(), "%m/%d/%Y"))
 
         search = browser.find_element(
-            "id", "ctl00_ContentPlaceHolder1_SearchAgendasMeetings_imageButtonSearch"
+            "id",
+            "ctl00_ContentPlaceHolder1_SearchAgendasMeetings_imageButtonSearch",
         )
         search.click()
         time.sleep(6)
@@ -148,7 +175,9 @@ def get_minutes_docs(config: CobbConfig):
                 link = [
                     minutes_link.get_attribute("href")
                     for minutes_link in row.find_elements(By.TAG_NAME, "a")
-                    if minutes_link_reg.search(minutes_link.get_attribute("id"))
+                    if minutes_link_reg.search(
+                        minutes_link.get_attribute("id")
+                    )
                 ]
 
                 if len(link) > 0:
@@ -175,10 +204,13 @@ def get_minutes_docs(config: CobbConfig):
 
     if sys.platform.startswith("linux"):
         subprocess.run(
-            ["sudo", "docker", "rm", "-f", "selenium"], stdout=subprocess.DEVNULL
+            ["sudo", "docker", "rm", "-f", "selenium"],
+            stdout=subprocess.DEVNULL,
         )
     elif sys.platform.startswith("darwin"):
-        subprocess.run(["docker", "rm", "-f", "selenium"], stdout=subprocess.DEVNULL)
+        subprocess.run(
+            ["docker", "rm", "-f", "selenium"], stdout=subprocess.DEVNULL
+        )
 
         session = requests.Session()
         doc_ops = FileOps(
