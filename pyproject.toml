@@ -8,7 +8,6 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-pymupdf = "^1.23.18"
 sqlite-utils = "^3.36"
 requests = "^2.31.0"
 beautifulsoup4 = "^4.12.3"
@@ -18,6 +17,7 @@ pytesseract = "^0.3.10"
 datasette = "^0.64.6"
 autocorrect = "^2.6.1"
 selenium = "^4.17.2"
+pymupdf = "^1.23.19"
 
 [build-system]
 requires = ["poetry-core"]
