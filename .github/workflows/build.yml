@@ -1,0 +1,48 @@
+name: Deploy
+on:
+  push:
+    tags:        
+      - '*'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+    - uses: Gr1N/setup-poetry@v8
+    - run: poetry --version
+
+    - name: Build package
+      run: poetry build
+
+    - name: Archive Results
+      if: always()
+      uses: actions/upload-artifact@v1
+      with:
+        name: pip-packages
+        path: dist/
+
+  release:
+    needs: build
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Release
+        uses: fnkr/github-action-ghr@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GHR_COMPRESS: xz
+          GHR_PATH: dist/
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

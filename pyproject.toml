@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "cobb-tracker"
+version = "0.1.0"
+description = "A program to pull the meeting minutes for all the cities in Cobb County"
+authors = ["Guyliner <guyliner69@proton.me>"]
+license = "GPL-3.0-only"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+sqlite-utils = "^3.36"
+requests = "^2.31.0"
+beautifulsoup4 = "^4.12.3"
+numpy = "^1.26.3"
+pillow = "^10.2.0"
+pytesseract = "^0.3.10"
+datasette = "^0.64.6"
+autocorrect = "^2.6.1"
+selenium = "^4.17.2"
+pymupdf = "^1.23.19"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+cobb-tracker = 'cobb_tracker.__main__:main'
+
+[tool.poetry.urls]
+Homepage = "https://github.com/ABetterCobb/cobb-tracker"
+Issues = "https://github.com/ABetterCobb/cobb-tracker/issues"
