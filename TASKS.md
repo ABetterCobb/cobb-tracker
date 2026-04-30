@@ -90,7 +90,7 @@ Last live-site audit: **2026-04-30** ([AUDIT.md](AUDIT.md)).
 
 These block sections B and C — would like answers before sinking time into them.
 
-1. **Existing corpus.** Is there a backup of the database/files from Sam's last working deployment? If yes, we ingest that into Paperless rather than re-scraping years of history.
+1. ~~**Existing corpus.** Is there a backup of the database/files from Sam's last working deployment? If yes, we ingest that into Paperless rather than re-scraping years of history.~~ **Resolved 2026-04-30:** Sam has a backup and plans to ingest it into Paperless. Scraper still needs to cover the 2025–2026 gap (which lines up with the Acworth/Austell breakage windows in the audit).
 2. **Mableton in scope?** And which platform is it on?
 3. **Legistar / Laserfische** — which jurisdictions specifically? (Confirmed *not* Smyrna: its Legistar history was migrated into PrimeGov, and Laserfiche only matters for pre-2013 Smyrna if that era is in scope.)
 4. **Agenda packets.** Pre-split on our side, or preserve the original composite in Paperless and accept the OCR limitations?
