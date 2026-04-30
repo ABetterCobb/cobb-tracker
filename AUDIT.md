@@ -1,7 +1,7 @@
 # Scraper Audit — Live-Site Run
 
 **Run date:** 2026-04-30
-**Methodology:** each scraper module's HTTP entry points and a representative file URL were exercised against the live vendor site and graded against the verification checklist in [TASKS.md](TASKS.md). The `__main__.py` CLI was not used (it `sys.exit()`s on non-posix at [__main__.py:60](src/cobb_tracker/__main__.py#L60)); endpoints were exercised directly with `curl` and module logic was reproduced in Python against the saved responses. Selenium-driven NovusAgenda was checked statically only (requires Linux + `sudo docker run`).
+**Methodology:** each scraper module's HTTP entry points and a representative file URL were exercised against the live vendor site and graded against the verification checklist in [TASKS.md](TASKS.md). The `__main__.py` CLI was not used (it `sys.exit()`s on non-posix at [__main__.py:60](src/cobb_tracker/__main__.py#L60)); endpoints were exercised directly with `curl` and module logic was reproduced in Python against the saved responses. NovusAgenda required Selenium and a Docker container — its module had a `sudo docker run` hard-coded for Linux/macOS only; after a small portability fix ([novusagenda.py:87](src/cobb_tracker/municipalities/novusagenda.py#L87)) the full Selenium-driven scrape ran from Windows against the live grid.
 
 ## Verdict matrix
 
@@ -14,7 +14,7 @@
 | [smyrna.py](src/cobb_tracker/municipalities/smyrna.py) | PrimeGov | ✅ 200 | ✅ | ✅ | ✅ | ✅ %PDF-1.7 | **OK** |
 | [austell.py](src/cobb_tracker/municipalities/austell.py) | Sophicity → Municode (migrated) | ✅ 200 | ❌ on current page | ❌ | n/a | n/a | **Broken — vendor migrated** |
 | [powdersprings.py](src/cobb_tracker/municipalities/powdersprings.py) | CivicPlus Archive Center | ⚠️ 301 to new domain | ✅ via follow | ✅ | ✅ | ✅ %PDF-1.7 (via redirect) | **Working but on borrowed time** |
-| [novusagenda.py](src/cobb_tracker/municipalities/novusagenda.py) | NovusAgenda | ✅ 200 | not exercised (Selenium) | unknown | n/a | n/a | **Cannot run on Windows; static checks pass** |
+| [novusagenda.py](src/cobb_tracker/municipalities/novusagenda.py) | NovusAgenda | ✅ 200 | ✅ (Selenium, 36 pages) | ❌ frozen at 2023-04-24 | ✅ | ✅ %PDF-1.6 | **Archive-only — no new content since 2023; CivicClerk is the live source** |
 
 ---
 
@@ -85,8 +85,10 @@
 
 - `GET https://kennesaw.novusagenda.com/agendapublic` → **HTTP 200** after 1 redirect (trailing-slash normalization), 84.5 KB. Title `<title>NovusAGENDA</title>`.
 - Expected element IDs (`ddlDateRange`, `SearchAgendasMeetings`, `radGridMeetings`) are all present in the static HTML.
-- **Could not actually run.** Module hard-codes `sudo docker run …/selenium/standalone-chrome` ([novusagenda.py:65-105](src/cobb_tracker/municipalities/novusagenda.py#L65-L105)) and exits on Windows. So nothing past page-load was exercised this run.
-- TASKS.md already flags this module as possibly obsolete (Kennesaw migrated to CivicClerk). The CivicClerk Kennesaw run above pulled 14 Minutes on page 1 alone, so the live source is fine without it. Decision needed: delete or rewrite for the era this can still cover.
+- **Selenium path now runs on Windows.** Module's docker startup/cleanup originally hard-coded `sudo docker run` for Linux only and `docker run` for macOS only, with `signal_handler` shelling out to `sudo` unconditionally. Treating `win32` like `darwin` (Docker Desktop, no `sudo`) at [novusagenda.py:87](src/cobb_tracker/municipalities/novusagenda.py#L87) and [novusagenda.py:210](src/cobb_tracker/municipalities/novusagenda.py#L210), and gating the `sudo` prefix in `signal_handler` to Linux at [novusagenda.py:45-53](src/cobb_tracker/municipalities/novusagenda.py#L45-L53), got the full scrape running against the live grid.
+- **End-to-end run** (date range 1/1/2000 → today): 36 pages paginated cleanly, **320 unique minutes URLs collected**. Spot-checked PDF (`MinutesMeetingID=445`) → `application/pdf`, `%PDF-1.6`.
+- **The site is archive-only.** The most recent minute is **2023-04-24** (Regular Council Meeting). Pages 27–36 returned rows but zero minutes links — Kennesaw stopped publishing to NovusAgenda 2+ years ago. The CivicClerk Kennesaw run above pulled 14 Minutes on page 1 alone, so current content is fully covered there.
+- **Decision implied.** This module has no role in ongoing scrapes. Its only remaining value is a one-time backfill of the 320 historical PDFs (2000–2023) that don't appear in CivicClerk; after that, retire the module and remove the Selenium/Docker dependency from the project.
 
 ---
 
