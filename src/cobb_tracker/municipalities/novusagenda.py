@@ -46,9 +46,10 @@ def signal_handler(signal, frame):
     """
     Clean exit if user tries to kill the program
     """
-    subprocess.run(
-        ["sudo", "docker", "rm", "-f", "selenium"], stdout=subprocess.DEVNULL
-    )
+    cmd = ["docker", "rm", "-f", "selenium"]
+    if sys.platform.startswith("linux"):
+        cmd = ["sudo"] + cmd
+    subprocess.run(cmd, stdout=subprocess.DEVNULL)
     sys.exit(0)
 
 
@@ -84,7 +85,7 @@ def get_minutes_docs(config: CobbConfig):
             logging.error(f"{e}")
             sys.exit()
 
-    elif sys.platform.startswith("darwin"):
+    elif sys.platform.startswith("darwin") or sys.platform == "win32":
         try:
             subprocess.run(
                 [
@@ -207,7 +208,7 @@ def get_minutes_docs(config: CobbConfig):
             ["sudo", "docker", "rm", "-f", "selenium"],
             stdout=subprocess.DEVNULL,
         )
-    elif sys.platform.startswith("darwin"):
+    elif sys.platform.startswith("darwin") or sys.platform == "win32":
         subprocess.run(
             ["docker", "rm", "-f", "selenium"], stdout=subprocess.DEVNULL
         )
