@@ -42,7 +42,7 @@ Last live-site audit: **2026-04-30** ([AUDIT.md](AUDIT.md)).
 - [ ] **Sanity-check guardrail.** Log a warning when a module that historically returned >0 docs returns 0 in a run. Acworth and Austell both failed silently this audit; this would have caught both automatically.
 - [ ] Clean up the doubled `//` in [acworth.py:11-15](src/cobb_tracker/municipalities/acworth.py#L11-L15) (cosmetic — request still works).
 - [ ] Add **Mableton** (vendor TBD).
-- [ ] Decide whether to revive NovusAgenda Kennesaw scraping. If yes, replace `sudo docker run` with a sidecar Selenium service or migrate to Playwright. (Audit suggests this is moot — CivicClerk Kennesaw covers current minutes.)
+- [ ] **Retire NovusAgenda Kennesaw scraping.** Verified 2026-04-30: site is frozen at 2023-04-24, CivicClerk has been the live source since. Plan: (a) one-time historical backfill of the 320 pre-2023 PDFs the module enumerates, then (b) delete [novusagenda.py](src/cobb_tracker/municipalities/novusagenda.py) and drop the Selenium + Docker runtime dependency from the project. Until backfill happens, the Windows-portable scrape ([novusagenda.py:87](src/cobb_tracker/municipalities/novusagenda.py#L87)) is what runs it. Per Sam (2026-04-30): NovusAgenda is the only scrape that was "insane" — pure PHP/JS with no API — which is exactly why the Selenium path exists. Backfill from every other vendor is considered easy.
 - [ ] Add **Laserfische WebLink** support if any in-scope jurisdiction uses it.
 - [ ] Add **Legistar** support for whichever jurisdiction Sam noted.
 - [ ] Replace the random `unknownNNN` date fallback in [string_ops.py:13](src/cobb_tracker/string_ops.py#L13) with a "needs review" queue — silent random keys are how docs get lost.
@@ -90,7 +90,7 @@ Last live-site audit: **2026-04-30** ([AUDIT.md](AUDIT.md)).
 
 These block sections B and C — would like answers before sinking time into them.
 
-1. **Existing corpus.** Is there a backup of the database/files from Sam's last working deployment? If yes, we ingest that into Paperless rather than re-scraping years of history.
+1. ~~**Existing corpus.** Is there a backup of the database/files from Sam's last working deployment? If yes, we ingest that into Paperless rather than re-scraping years of history.~~ **Resolved 2026-04-30:** Sam has a backup and plans to ingest it into Paperless. Scraper still needs to cover the 2025–2026 gap (which lines up with the Acworth/Austell breakage windows in the audit).
 2. **Mableton in scope?** And which platform is it on?
 3. **Legistar / Laserfische** — which jurisdictions specifically? (Confirmed *not* Smyrna: its Legistar history was migrated into PrimeGov, and Laserfiche only matters for pre-2013 Smyrna if that era is in scope.)
 4. **Agenda packets.** Pre-split on our side, or preserve the original composite in Paperless and accept the OCR limitations?
