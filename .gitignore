@@ -163,3 +163,7 @@ cython_debug/
 *.pdf
 *.tar.gz
 *.swp
+audit-tmp/
+
+# Claude Code local settings
+.claude/settings.local.json
