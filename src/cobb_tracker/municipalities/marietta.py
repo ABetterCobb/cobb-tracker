@@ -28,7 +28,7 @@ RE_ALPHA = re.compile(r"[0-9\.\-]")
 
 def name_documents(
     session: requests.Session,
-    container_name: str,
+    muni_body: str,
     config: CobbConfig,
     minutes_urls: dict,
 ) -> None:
@@ -38,6 +38,7 @@ def name_documents(
         row (Tag): Row from a Marietta meeting list table.
         session (requests.Session): Session object for doing HTTP calls.
     """
+    print(muni_body)
     for url in minutes_urls.keys():
         row = minutes_urls[url]
         meeting_title = row.find(
@@ -103,9 +104,12 @@ def get_minutes_docs(config: CobbConfig):
     )
     for container in agenda_containers:
         year_list = get_years(container)
-        container_name = (container.find("h2", tabindex="0").text).replace(
+
+        # Planning Commission, City Council, BLW, etc
+        muni_body= (container.find("h2", tabindex="0").text).replace(
             " ", "_"
-        )[1:]
+        )
+
         agenda_table_id = re.sub(
             r"[a-zA-Z]",
             "",
@@ -128,12 +132,12 @@ def get_minutes_docs(config: CobbConfig):
                     minutes_url = f"{URL_BASE}{minutes_link.get('href')}"
                     minutes_urls[minutes_url] = row
 
-    name_documents(
-        minutes_urls=minutes_urls,
-        session=session,
-        container_name=container_name,
-        config=config,
-    )
+        name_documents(
+            minutes_urls=minutes_urls,
+            session=session,
+            muni_body=muni_body,
+            config=config,
+        )
 
 
 def clean_name(input_string: str) -> str:
