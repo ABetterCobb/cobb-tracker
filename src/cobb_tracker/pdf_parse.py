@@ -8,22 +8,20 @@ import io
 import os
 import logging
 from pathlib import Path
+import requests
 from multiprocessing import Process
 from multiprocessing import Semaphore
 import shutil
 import math
+import time
 
-#import pytesseract
-import fitz
-from PIL import Image
-from sqlite_utils import Database
 import numpy as np
 
 from cobb_tracker import file_ops
 from cobb_tracker.cobb_config import CobbConfig
 
 
-class DatabaseOps:
+class PaperlessOps:
     def __init__(self, config: CobbConfig):
         """
         Args:
@@ -31,30 +29,21 @@ class DatabaseOps:
             configuration settings.
         """
         self.SEMAPHORE = Semaphore(len(os.sched_getaffinity(0)))
-        self.DATABASE_DIR = config.get_config("directories", "database_dir")
         self.MINUTES_DIR = config.get_config("directories", "minutes_dir")
-        self.DB = Database(Path(self.DATABASE_DIR).joinpath("minutes.db"))
+
+        #Paperless-ngx credentials provided by users
+        self.PAPERLESS_URL = config.get_config("paperless-config", "paperless_url")
+        self.PAPERLESS_TOKEN = config.get_config("paperless-config", "paperless_token")
+        self.HEADERS = {'Authorization': 'token {}'.format(self.PAPERLESS_TOKEN)}
 
         self.args = config.args
-        self.ZOOM = 2
-        self.MAT = fitz.Matrix(self.ZOOM, self.ZOOM)
-
         self.doc_ops = file_ops.FileList(
             minutes_dir=config.get_config("directories", "minutes_dir")
         )
         self.config = config
         self.mins_and_checksums = {}
 
-#        tesseract_location = shutil.which("tesseract")
-#
-#        if tesseract_location is not None:
-#            pytesseract.pytesseract.tesseract_cmd = tesseract_location
-#        else:
-#            logging.error("Tesseract is not in PATH or is not installed")
-#            sys.exit()
-
-    def pdf_to_database(self):
-        DB = self.DB
+    def pdf_to_paperless(self):
         all_minutes_files = np.array(self.doc_ops.minutes_files())
         doc_ops = file_ops.FileList(minutes_dir=self.MINUTES_DIR)
 
@@ -63,51 +52,25 @@ class DatabaseOps:
             logging.error(f"There are no minutes files in {self.MINUTES_DIR}!")
             return
 
-        if not DB["pages"].exists():
-            DB["pages"].create(
-                {
-                    "municipality": str,
-                    "body": str,
-                    "date": str,
-                    "page": int,
-                    "text": str,
-                    "checksum": str,
-                },
-                pk=("municipality", "body", "date", "page", "checksum"),
-            )
-            DB["pages"].enable_fts(["text"], create_triggers=True)
-
         batches = math.ceil(len(all_minutes_files) / 300)
         array_of_all_minutes_files = np.array_split(all_minutes_files, batches)
 
         for list_of_minutes_files in array_of_all_minutes_files:
-            db_processes = [
-                Process(target=self.write_to_database, args=(file,))
+            upload_processes = [
+                Process(target=self.upload_to_paperless, args=(file,))
                 for file in list_of_minutes_files
             ]
-            for process in db_processes:
+            for process in upload_processes:
                 process.start()
-            for process in db_processes:
+            for process in upload_processes:
                 process.join()
 
-    def write_to_database(self, minutes_file: str):
+    def upload_to_paperless(self, minutes_file: str):
         """
-            Converts meeting minutes PDFs to text and inserts them into
-            an SQLite3 database
-        `"""
+            The PDFs are sent to paperless ngx. Provide the URL and the Token
+        """
         with self.SEMAPHORE:
-            checksum = str(self.doc_ops.get_checksum(Path(minutes_file)))
-
-            # Must zoom in in order for tesseract to give
-            # mostly accurate transcription
             file = str(minutes_file)
-
-            try:
-                doc = fitz.open(file)
-
-            except Exception as error:
-                logging.error(f"{error} Unable to convert {file} to text")
-                return
 
             rel_doc_path = file.replace(
                 self.config.get_config("directories", "minutes_dir"), ""
@@ -123,35 +86,19 @@ class DatabaseOps:
                 .replace("_", " ")
             )
             date = (os.path.split(Path(file))[1]).replace("-minutes.pdf", "")
-            checksum_row_count = sum(
-                1
-                for row in self.DB.query(
-                    f"select * from pages where checksum = '{checksum}'"
-                )
-            )
 
-            if checksum_row_count == 0 or self.args.force:
-                logging.info(f"{file}")
-                for page in doc:
-                    pix = page.get_pixmap(matrix=self.MAT)
+            files = {
+                "document": (minutes_file, open(minutes_file, 'rb'), "application/pdf"),
+            }
+            data = {
+                "created": date,
+                "document": open(minutes_file,'rb'),
+                "title": f"{body} minutes",
+                "from_webui": False,
+            }
 
-                    image_bytes = io.BytesIO(
-                        pix.tobytes(output="jpeg", jpg_quality=98)
-                    )
-
-                    page_image = Image.open(image_bytes)
-                    #page_text = pytesseract.image_to_string(page_image)
-                    page_image.close()
-
-                    self.DB["pages"].insert(
-                        {
-                            "municipality": municipality,
-                            "body": body,
-                            "date": date,
-                            "page": page.number,
-                            "text": page_text,
-                            "checksum": checksum,
-                        },
-                        replace=True,
-                    )
-            doc.close()
+            post_document=f"{self.PAPERLESS_URL}/api/documents/post_document/"
+            print(post_document)
+            time.sleep(3)
+            response = requests.post(post_document, headers=self.HEADERS, files=files, data=data)
+            print(response.content)
