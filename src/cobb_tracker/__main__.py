@@ -15,7 +15,7 @@ from cobb_tracker.municipalities import (
     austell,
     novusagenda,
 )
-from cobb_tracker.pdf_parse import DatabaseOps
+from cobb_tracker.pdf_parse import PaperlessOps
 from cobb_tracker.cobb_config import CobbConfig
 
 
@@ -168,8 +168,8 @@ def main():
         choose_muni("all", config)
 
     if args.push_to_database:
-        pdf_to_db = DatabaseOps(config)
-        pdf_to_db.pdf_to_database()
+        pdf_to_db = PaperlessOps(config)
+        pdf_to_db.pdf_to_paperless()
 
 
 if __name__ == "__main__":
