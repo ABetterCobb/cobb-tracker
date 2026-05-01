@@ -4,7 +4,6 @@ import sys
 from pathlib import Path
 import argparse
 
-
 class CobbConfig:
     def __init__(
         self,
@@ -17,7 +16,6 @@ class CobbConfig:
         self.DEFAULT_CONFIG_FILE = Path(f"{self.DEFAULT_CONFIG_DIR}").joinpath(
             "config.ini"
         )
-        self.DEFAULT_DATABASE_DIR = Path(self.DEFAULT_DATA_DIR).joinpath("db")
         self.DEFAULT_MINUTES_DIR = Path(self.DEFAULT_DATA_DIR).joinpath("minutes")
 
         self.args = flags
@@ -27,7 +25,6 @@ class CobbConfig:
 
         if not self.DEFAULT_CONFIG_FILE.exists():
             self.config["directories"] = {
-                "database_dir": f"{self.DEFAULT_DATABASE_DIR}",
                 "minutes_dir": f"{self.DEFAULT_MINUTES_DIR}",
             }
             self.DEFAULT_DATABASE_DIR.mkdir(parents=True, exist_ok=True)
@@ -44,9 +41,6 @@ class CobbConfig:
                 sys.exit()
             elif len(self.config.sections()) > 0:
                 try:
-                    Path(self.config.get("directories", "database_dir")).mkdir(
-                        parents=True, exist_ok=True
-                    )
                     Path(self.config.get("directories", "minutes_dir")).mkdir(
                         parents=True, exist_ok=True
                     )
