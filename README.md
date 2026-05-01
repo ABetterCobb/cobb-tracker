@@ -64,7 +64,7 @@ options:
 This program is in early stages, there are a few things that are not yet implemented or may never be.
 
 ### Laserfische WebLink
-Laserfische WebLink doesn't have permanent links to files, and instead download links are generated upon user request. In order for Laserfische to be scraped we essentially need to implemented a way to "walk down" the psuedo file system they have with a persistent user session. 
+Laserfische WebLink doesn't have permanent links to files, and instead download links are generated upon user request. In order for Laserfische to be scraped we essentially need to implemented a way to "walk down" the pseudo file system they have with a persistent user session. 
 
 ### PDFs need to have proper metadata associated with them
 If for a given PDF and there is no date data, no meeting data, etc, you will have to make up data or the PDFs will not be unique when they are written to the filesystem.
