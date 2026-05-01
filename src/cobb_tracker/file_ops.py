@@ -43,17 +43,21 @@ class FileOps:
         municipality = self.file_urls[url]["municipality"]
         meeting_type = self.file_urls[url]["meeting_name"]
         file_url = url
+        pdf_path = ""
         doc_date = self.file_urls[url]["date"]
         file_type = self.file_urls[url]["file_type"]
+
+        muni_body = self.file_urls[url]["muni_body"]
         pdf_path = Path(
             Path(self.config.get_config("directories", "minutes_dir")).joinpath(
-                municipality, meeting_type
+                municipality, muni_body
             )
         )
+
         # normalize
         meeting_type = meeting_type.lower()
 
-        doc_name = f"{doc_date}-{file_type}.pdf"
+        doc_name = f"{doc_date}-{meeting_type}-{file_type}.pdf"
         doc_full_path = os.path.join(pdf_path, doc_name)
 
         args = self.config.args
