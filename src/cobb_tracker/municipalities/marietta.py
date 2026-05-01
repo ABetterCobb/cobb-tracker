@@ -51,6 +51,7 @@ def name_documents(
         )
         minutes_urls[url]["municipality"] = "Marietta"
         minutes_urls[url]["file_type"] = "minutes"
+        minutes_urls[url]["muni_body"] = muni_body
 
         minutes_name = url.split("/")[-1]
 
@@ -88,7 +89,6 @@ def get_years(agenda_container: Tag) -> list[str]:
 
 
 def get_minutes_docs(config: CobbConfig):
-    minutes_urls = {}
     session = requests.Session()
 
     response = session.get(URL_AGENDAS, headers={"User-Agent": USER_AGENT})
@@ -103,6 +103,7 @@ def get_minutes_docs(config: CobbConfig):
         "div", class_="listing listingCollapse noHeader"
     )
     for container in agenda_containers:
+        minutes_urls = {}
         year_list = get_years(container)
 
         # Planning Commission, City Council, BLW, etc
