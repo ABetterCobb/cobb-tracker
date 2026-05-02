@@ -142,6 +142,7 @@ def get_meeting_info(archive_groups: dict):
                             .replace(" ", "_")
                         )
                         minutes_urls[file_url]["municipality"] = muni
+                        minutes_urls[file_url]["muni_body"] = archive_groups[group]
                         minutes_urls[file_url]["file_type"] = "minutes"
 
                         date = get_year.search(str(name.text))
