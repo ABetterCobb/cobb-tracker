@@ -49,7 +49,7 @@ def signal_handler(signal, frame):
     cmd = ["docker", "rm", "-f", "selenium"]
 
     if sys.platform.startswith("linux"):
-        cmd = ["podman", "rm", "-f", "selenium"], stdout=subprocess.DEVNULL
+        cmd = ["podman", "rm", "-f", "selenium"]
 
     subprocess.run(cmd, stdout=subprocess.DEVNULL)
     sys.exit(0)
