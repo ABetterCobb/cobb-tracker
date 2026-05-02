@@ -13,12 +13,20 @@ from cobb_tracker.cobb_config import CobbConfig
 
 BASE_URL = "https://smyrnaga.primegov.com/api/v2/PublicPortal"
 MEETINGS_URL = f"{BASE_URL}/ListArchivedMeetings?year="
+COMMITTEES_URL = f"https://smyrnaga.primegov.com/api/committee/GetCommitteeesListByShowInPublicPortal"
 MINUTES_URL = (
     "https://smyrnaga.primegov.com/Public/CompiledDocument?meetingTemplateId="
 )
-# [num]&compileOutputType=1
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0"
+
+
+def get_committee_name(session: requests.Session, committee_id: int, committees: list) -> str:
+    committee_name = next(
+        (committee["name"] for committee in committees if committee["id"] == committee_id),
+        "Misc")
+    print(committee_name)
+    return committee_name
 
 
 def get_all_events(session: requests.Session) -> dict:
@@ -55,6 +63,11 @@ def get_minutes_docs(config: CobbConfig):
     session = requests.Session()
     event_data = get_all_events(session)
 
+
+    committees = json.loads(
+        session.get(COMMITTEES_URL).content
+    )
+
     for year in event_data:
         for event in event_data[year]:
             event_date = datetime.strptime(
@@ -77,6 +90,7 @@ def get_minutes_docs(config: CobbConfig):
                     ] = event_title.replace(" ", "_")
                     minutes_urls[file_url]["date"] = event_date
                     minutes_urls[file_url]["file_type"] = "minutes"
+                    minutes_urls[file_url]["muni_body"] = get_committee_name(session, event["committeeId"], committees=committees)
 
     doc_ops = file_ops.FileOps(
         file_urls=minutes_urls,
