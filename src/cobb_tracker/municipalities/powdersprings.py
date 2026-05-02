@@ -24,7 +24,7 @@ from cobb_tracker.cobb_config import CobbConfig
 from cobb_tracker.string_ops import parse_date
 
 
-URL_BASE = "https://cityofpowdersprings.org/"
+URL_BASE = "https://www.powderspringsga.gov/"
 LIST_OF_ARCHIVE_SECTIONS = f"{URL_BASE}Archive.aspx"
 BASE_FILE_URL = f"{URL_BASE}ArchiveCenter/ViewFile/Item/"
 FILE_PAGE = f"{LIST_OF_ARCHIVE_SECTIONS}?ADID="
