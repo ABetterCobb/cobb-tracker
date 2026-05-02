@@ -47,8 +47,10 @@ def signal_handler(signal, frame):
     Clean exit if user tries to kill the program
     """
     cmd = ["docker", "rm", "-f", "selenium"]
+
     if sys.platform.startswith("linux"):
-        cmd = ["sudo"] + cmd
+        cmd = ["podman", "rm", "-f", "selenium"], stdout=subprocess.DEVNULL
+
     subprocess.run(cmd, stdout=subprocess.DEVNULL)
     sys.exit(0)
 
@@ -63,11 +65,10 @@ def get_minutes_docs(config: CobbConfig):
 
     if sys.platform.startswith("linux"):
         try:
-            subprocess.run(["sudo", "systemctl", "start", "docker"])
+            #subprocess.run(["sudo", "systemctl", "start", "docker"])
             subprocess.run(
                 [
-                    "sudo",
-                    "docker",
+                    "podman",
                     "run",
                     "-p",
                     "4444:4444",
@@ -191,6 +192,7 @@ def get_minutes_docs(config: CobbConfig):
                     minutes_urls[file_url] = {}
                     minutes_urls[file_url]["municipality"] = "Kennesaw"
                     minutes_urls[file_url]["meeting_name"] = columns[1]
+                    minutes_urls[file_url]["muni_body"] = columns[1]
                     minutes_urls[file_url]["date"] = parse_date(columns[0])
                     minutes_urls[file_url]["file_type"] = "minutes"
 
@@ -205,7 +207,7 @@ def get_minutes_docs(config: CobbConfig):
 
     if sys.platform.startswith("linux"):
         subprocess.run(
-            ["sudo", "docker", "rm", "-f", "selenium"],
+            ["podman", "rm", "-f", "selenium"],
             stdout=subprocess.DEVNULL,
         )
     elif sys.platform.startswith("darwin") or sys.platform == "win32":
@@ -213,11 +215,11 @@ def get_minutes_docs(config: CobbConfig):
             ["docker", "rm", "-f", "selenium"], stdout=subprocess.DEVNULL
         )
 
-        session = requests.Session()
-        doc_ops = FileOps(
-            file_urls=minutes_urls,
-            session=session,
-            user_agent=USER_AGENT,
-            config=config,
-        )
-        doc_ops.write_minutes_doc()
+    session = requests.Session()
+    doc_ops = FileOps(
+        file_urls=minutes_urls,
+        session=session,
+        user_agent=USER_AGENT,
+        config=config,
+    )
+    doc_ops.write_minutes_doc()
