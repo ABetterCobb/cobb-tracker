@@ -71,6 +71,7 @@ class CivicPlus:
                     minutes_urls[file_url] = {}
                     minutes_urls[file_url]["municipality"] = self.MUNI
                     minutes_urls[file_url]["meeting_name"] = event_type
+                    minutes_urls[file_url]["muni_body"] = event_type
                     minutes_urls[file_url]["date"] = event_date
                     minutes_urls[file_url]["file_type"] = "minutes"
 
