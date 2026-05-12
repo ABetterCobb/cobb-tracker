@@ -13,7 +13,7 @@ from multiprocessing import Semaphore
 import shutil
 import math
 
-import pytesseract
+#import pytesseract
 import fitz
 from PIL import Image
 from sqlite_utils import Database
@@ -45,13 +45,13 @@ class DatabaseOps:
         self.config = config
         self.mins_and_checksums = {}
 
-        tesseract_location = shutil.which("tesseract")
-
-        if tesseract_location is not None:
-            pytesseract.pytesseract.tesseract_cmd = tesseract_location
-        else:
-            logging.error("Tesseract is not in PATH or is not installed")
-            sys.exit()
+#        tesseract_location = shutil.which("tesseract")
+#
+#        if tesseract_location is not None:
+#            pytesseract.pytesseract.tesseract_cmd = tesseract_location
+#        else:
+#            logging.error("Tesseract is not in PATH or is not installed")
+#            sys.exit()
 
     def pdf_to_database(self):
         DB = self.DB
@@ -140,7 +140,7 @@ class DatabaseOps:
                     )
 
                     page_image = Image.open(image_bytes)
-                    page_text = pytesseract.image_to_string(page_image)
+                    #page_text = pytesseract.image_to_string(page_image)
                     page_image.close()
 
                     self.DB["pages"].insert(

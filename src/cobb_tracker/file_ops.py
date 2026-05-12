@@ -5,6 +5,7 @@ import requests
 import concurrent.futures as cf
 from cobb_tracker.cobb_config import CobbConfig
 import hashlib
+import time
 
 
 class FileOps:
@@ -43,29 +44,38 @@ class FileOps:
         municipality = self.file_urls[url]["municipality"]
         meeting_type = self.file_urls[url]["meeting_name"]
         file_url = url
+        pdf_path = ""
         doc_date = self.file_urls[url]["date"]
         file_type = self.file_urls[url]["file_type"]
+
+        muni_body = self.file_urls[url]["muni_body"]
         pdf_path = Path(
             Path(self.config.get_config("directories", "minutes_dir")).joinpath(
-                municipality, meeting_type
+                municipality, muni_body
             )
         )
+
         # normalize
         meeting_type = meeting_type.lower()
 
-        doc_name = f"{doc_date}-{file_type}.pdf"
+        doc_name = f"{doc_date}-{meeting_type}-{file_type}.pdf"
         doc_full_path = os.path.join(pdf_path, doc_name)
 
         args = self.config.args
         if not os.path.exists(doc_full_path) or args.force:
             pdf_path.mkdir(parents=True, exist_ok=True)
-            response = requests.get(file_url, headers={"User-Agent": self.user_agent})
 
-            if not response.ok:
-                logging.error(
-                    f"Couldn't retrieve minutes document: {meeting_type} {doc_name} {response.reason}"
-                )
-                return
+            for attempt in range(5):
+                response = requests.get(file_url, headers={"User-Agent": self.user_agent})
+                if response.status_code == 200:
+                    break
+                elif response.status_code == 429:
+                    time.sleep(2 ** attempt)
+                    if not response.ok and attempt == 5:
+                        logging.error(
+                            f"Couldn't retrieve minutes document: {meeting_type} {doc_name} {response.reason}"
+                        )
+                        return
             pdf_file = response.content
 
             with open(pdf_path.joinpath(doc_name), "wb") as file:
