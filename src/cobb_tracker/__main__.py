@@ -7,7 +7,7 @@ import os
 import argparse
 from cobb_tracker.municipalities import (
     marietta,
-    civicplus,
+    civicclerk,
     smyrna,
     acworth,
     powdersprings,
@@ -28,7 +28,7 @@ def choose_muni(municipality: str, config: CobbConfig):
         marietta.get_minutes_docs(config=config)
 
     if muni == "cobb" or config.args.pull_all_cities:
-        cobb_civic = civicplus.CivicPlus(
+        cobb_civic = civicclerk.CivicClerk(
             base_url="https://cobbcoga.api.civicclerk.com/v1", muni="Cobb"
         )
         cobb_civic.get_minutes_docs(config=config)
@@ -43,12 +43,19 @@ def choose_muni(municipality: str, config: CobbConfig):
         powdersprings.get_minutes_docs(config=config)
 
     if muni == "kennesaw" or config.args.pull_all_cities:
-        kennesaw_civic = civicplus.CivicPlus(
+        kennesaw_civic = civicclerk.CivicClerk(
             base_url="https://kennesawga.api.civicclerk.com/v1",
             muni="Kennesaw"
         )
         kennesaw_civic.get_minutes_docs(config=config)
         novusagenda.get_minutes_docs(config=config)
+
+    if muni == "mableton" or config.args.pull_all_cities:
+        mableton_civic = civicclerk.CivicClerk(
+            base_url="https://mabletonga.api.civicclerk.com/v1",
+            muni="Mableton"
+        )
+        mableton_civic.get_minutes_docs(config=config)
 
     if muni == "smyrna" or config.args.pull_all_cities:
         smyrna.get_minutes_docs(config=config)
