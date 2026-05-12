@@ -7,8 +7,9 @@
 
 | Module | Vendor | HTTP OK | Listing parses | Coverage current | Date parse | PDF serves | Verdict |
 |---|---|---|---|---|---|---|---|
-| [civicplus.py](src/cobb_tracker/municipalities/civicplus.py) — Cobb | CivicClerk | ✅ 200 | ✅ | ✅ | ✅ | ✅ %PDF-1.4 | **OK** |
-| [civicplus.py](src/cobb_tracker/municipalities/civicplus.py) — Kennesaw | CivicClerk | ✅ 200 | ✅ | ✅ | ✅ | ✅ (same backend) | **OK** |
+| [civicclerk.py](src/cobb_tracker/municipalities/civicclerk.py) — Cobb | CivicClerk | ✅ 200 | ✅ | ✅ | ✅ | ✅ %PDF-1.4 | **OK** |
+| [civicclerk.py](src/cobb_tracker/municipalities/civicclerk.py) — Kennesaw | CivicClerk | ✅ 200 | ✅ | ✅ | ✅ | ✅ (same backend) | **OK** |
+| [civicclerk.py](src/cobb_tracker/municipalities/civicclerk.py) — Mableton | CivicClerk | ✅ 200 | ✅ | ✅ | ✅ | ✅ (same backend) | **OK — corpus from 2024-08-14** (added 2026-05-11) |
 | [acworth.py](src/cobb_tracker/municipalities/acworth.py) | IQM2 | ✅ 200 | ✅ | ❌ frozen at end of 2024 | ✅ | ✅ %PDF-1.7 (historic) | **Stale — missing all 2025/2026** |
 | [marietta.py](src/cobb_tracker/municipalities/marietta.py) | CivicPlus AgendaCenter | ✅ 200 | ✅ | ✅ | ✅ | ✅ %PDF-1.6 | **OK** |
 | [smyrna.py](src/cobb_tracker/municipalities/smyrna.py) | PrimeGov | ✅ 200 | ✅ | ✅ | ✅ | ✅ %PDF-1.7 | **OK** |
@@ -20,15 +21,25 @@
 
 ## Per-module findings
 
-### Cobb / Kennesaw — `civicplus.py` (CivicClerk)
+### Cobb / Kennesaw — `civicclerk.py` (CivicClerk)
 
 - `GET https://cobbcoga.api.civicclerk.com/v1/Events/` → **HTTP 200**, `application/json` (OData), 56.8 KB.
 - `GET https://kennesawga.api.civicclerk.com/v1/Events/` → **HTTP 200**, 59.2 KB.
-- Both return 15 events on page 1 with a valid `@odata.nextLink` for pagination. Pagination loop in [civicplus.py:38-49](src/cobb_tracker/municipalities/civicplus.py#L38-L49) still applies.
-- File-type counts on Cobb page 1: `Agenda: 14, Agenda Packet: 15, Minutes: 12`. Kennesaw page 1: `Agenda: 15, Agenda Packet: 15, Minutes: 14`. Module currently filters only `type == "Minutes"` ([civicplus.py:70](src/cobb_tracker/municipalities/civicplus.py#L70)) — confirming TASKS.md item to extend ingestion to agendas/packets is straightforward here (the data is already in `publishedFiles`).
+- Both return 15 events on page 1 with a valid `@odata.nextLink` for pagination. Pagination loop in [civicclerk.py:38-49](src/cobb_tracker/municipalities/civicclerk.py#L38-L49) still applies.
+- File-type counts on Cobb page 1: `Agenda: 14, Agenda Packet: 15, Minutes: 12`. Kennesaw page 1: `Agenda: 15, Agenda Packet: 15, Minutes: 14`. Module currently filters only `type == "Minutes"` ([civicclerk.py:70](src/cobb_tracker/municipalities/civicclerk.py#L70)) — confirming TASKS.md item to extend ingestion to agendas/packets is straightforward here (the data is already in `publishedFiles`).
 - Spot-checked Cobb Minutes file (fileId=180) → `application/pdf`, magic `%PDF-1.4`, 1.13 MB.
-- `categoryName` is populated on every event sampled; the `try/except` fallback to `"misc"` at [civicplus.py:58-63](src/cobb_tracker/municipalities/civicplus.py#L58-L63) was not triggered.
+- `categoryName` is populated on every event sampled; the `try/except` fallback to `"misc"` at [civicclerk.py:58-63](src/cobb_tracker/municipalities/civicclerk.py#L58-L63) was not triggered.
 - **Note** — Sam mentioned Cobb is split across two storage backends. Only one host (`cobbcoga.api.civicclerk.com`) is wired into the module; if the second host carries records the first does not, those are silently missing. Catalogue task in TASKS.md is the right next step.
+
+### Mableton — `civicclerk.py` (CivicClerk, added 2026-05-11)
+
+- `GET https://mabletonga.api.civicclerk.com/v1/Events/` → **HTTP 200**, OData v4 JSON. API host follows the sibling-of-portal pattern (the citizen-facing portal is at `mabletonga.portal.civicclerk.com`) — same convention as Cobb (`cobbcoga`) and Kennesaw (`kennesawga`), so the existing `CivicClerk` client drops in unchanged.
+- **Corpus floor: 2024-08-14.** Earliest `createdOn` is 2024-07-26 (id=29), earliest `eventDate` is 2024-08-14. The tenant was provisioned mid-2024 with no historical backfill.
+- **Pre-tenant publishing gap.** Mableton's council was seated May 2023 and met regularly from January 2024 (per Cobb Courier), but none of that history is in CivicClerk and it is not PDF-shaped elsewhere — only YouTube (`@CityofMabletonGA`) and news archives. **This is not a scraper bug**; the records simply don't exist in any vendor system the scraper can hit. Tracked as a non-scraper backfill task in TASKS.md.
+- **Document coverage is dense.** 14/15 events on page 1 carry the full Agenda + Agenda Packet + Minutes triple in `publishedFiles`. The one exception is a "Media Test" event (id=133) with empty `publishedFiles` and no `categoryName` — that case is now guarded explicitly at [civicclerk.py:55-57](src/cobb_tracker/municipalities/civicclerk.py#L55-L57) so the misleading ERROR log from the `try/except` at [civicclerk.py:58-63](src/cobb_tracker/municipalities/civicclerk.py#L58-L63) no longer fires.
+- **Minutes lag** ~2–4 weeks after meeting date (per `publishOn`). Only the trailing edge of any run will be missing minutes; this is the publish cycle, not a scraper miss.
+- **File-type enum drift.** The Mableton tenant exposes numeric type codes on each file (Agenda=1, Agenda Packet=2, Minutes=4) alongside the human-readable string the module currently matches at [civicclerk.py:70](src/cobb_tracker/municipalities/civicclerk.py#L70). No functional impact today (string match still works), but the numeric codes are the more durable filter for the agenda+packet unlock at [TASKS.md:41](TASKS.md#L41).
+- **Bonus discovery — video.** Some events expose `mediaStreamPath` / `mediaSourcePathMp4` pointing at `cpmedia.azureedge.net/mabletonga/{hash}.mp4` (CivicPlus media CDN). Publicly accessible, direct mp4 links. Out of scope for the current Paperless document pipeline; tracked in TASKS.md so the capability isn't forgotten.
 
 ### Acworth — `acworth.py` (IQM2)
 

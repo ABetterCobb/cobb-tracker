@@ -1,5 +1,8 @@
 """
-CivicPlus handles Kennesaw and Cobb County
+CivicClerk handles Cobb County, Kennesaw, and Mableton.
+
+CivicClerk is a CivicPlus product (acquired 2021); the API surface is
+the OData v4 tenant under `*.api.civicclerk.com/v1`.
 """
 import logging
 from datetime import datetime
@@ -11,7 +14,7 @@ from cobb_tracker import file_ops
 from cobb_tracker.cobb_config import CobbConfig
 
 
-class CivicPlus:
+class CivicClerk:
     def __init__(self, base_url: str, muni: str):
         self.BASE_URL = base_url
         self.EVENTS_URL = f"{self.BASE_URL}/Events/"
@@ -53,6 +56,8 @@ class CivicPlus:
         minutes_urls = {}
         session = requests.Session()
         for event in self.get_all_events(session):
+            if not event.get("publishedFiles"):
+                continue
             try:
                 event_type = event["categoryName"].lstrip().replace(" ", "_")
             except Exception as e:
