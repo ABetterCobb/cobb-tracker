@@ -10,7 +10,8 @@
 | [civicclerk.py](src/cobb_tracker/municipalities/civicclerk.py) — Cobb | CivicClerk | ✅ 200 | ✅ | ✅ | ✅ | ✅ %PDF-1.4 | **OK** |
 | [civicclerk.py](src/cobb_tracker/municipalities/civicclerk.py) — Kennesaw | CivicClerk | ✅ 200 | ✅ | ✅ | ✅ | ✅ (same backend) | **OK** |
 | [civicclerk.py](src/cobb_tracker/municipalities/civicclerk.py) — Mableton | CivicClerk | ✅ 200 | ✅ | ✅ | ✅ | ✅ (same backend) | **OK — corpus from 2024-08-14** (added 2026-05-11) |
-| [acworth.py](src/cobb_tracker/municipalities/acworth.py) | IQM2 | ✅ 200 | ✅ | ❌ frozen at end of 2024 | ✅ | ✅ %PDF-1.7 (historic) | **Stale — missing all 2025/2026** |
+| [acworth.py](src/cobb_tracker/municipalities/acworth.py) | IQM2 | ✅ 200 | ✅ | ❌ frozen at end of 2024 | ✅ | ✅ %PDF-1.7 (historic) | **Archive-only — IQM2 frozen; live ingest moved to [acworth_granicus.py](src/cobb_tracker/municipalities/acworth_granicus.py) 2026-05-13** |
+| [acworth_granicus.py](src/cobb_tracker/municipalities/acworth_granicus.py) (added 2026-05-13) | Granicus | ✅ 200 | ✅ | ✅ (302 URLs across 9 bodies, 2024–2026) | ✅ | ✅ %PDF-1.4 (Agenda + Minutes) | **OK** |
 | [marietta.py](src/cobb_tracker/municipalities/marietta.py) | CivicPlus AgendaCenter | ✅ 200 | ✅ | ✅ | ✅ | ✅ %PDF-1.6 | **OK** |
 | [smyrna.py](src/cobb_tracker/municipalities/smyrna.py) | PrimeGov | ✅ 200 | ✅ | ✅ | ✅ | ✅ %PDF-1.7 | **OK** |
 | [austell.py](src/cobb_tracker/municipalities/austell.py) | Sophicity → Municode (migrated) | ✅ 200 | ❌ on current page | ❌ | n/a | n/a | **Broken — vendor migrated** |
@@ -41,9 +42,13 @@
 - **File-type enum drift.** The Mableton tenant exposes numeric type codes on each file (Agenda=1, Agenda Packet=2, Minutes=4) alongside the human-readable string the module currently matches at [civicclerk.py:70](src/cobb_tracker/municipalities/civicclerk.py#L70). No functional impact today (string match still works), but the numeric codes are the more durable filter for the agenda+packet unlock at [TASKS.md:41](TASKS.md#L41).
 - **Bonus discovery — video.** Some events expose `mediaStreamPath` / `mediaSourcePathMp4` pointing at `cpmedia.azureedge.net/mabletonga/{hash}.mp4` (CivicPlus media CDN). Publicly accessible, direct mp4 links. Out of scope for the current Paperless document pipeline; tracked in TASKS.md so the capability isn't forgotten.
 
-### Acworth — `acworth.py` (IQM2)
+### Acworth — `acworth.py` (IQM2) / `acworth_granicus.py` (Granicus)
 
-**This module is fetching nothing for 2025 or 2026.**
+**Resolved 2026-05-13.** IQM2 confirmed dead for new content; live ingest now flows through a new Granicus module. IQM2 retained as archive-only for the 2006–2024 historical corpus.
+
+**Original finding (2026-04-30, IQM2):**
+
+This module is fetching nothing for 2025 or 2026.
 
 - `GET https://acworthcityga.iqm2.com//api/Agency/StartupData` → **HTTP 200** (the doubled slash is harmless but should be cleaned up at [acworth.py:11-15](src/cobb_tracker/municipalities/acworth.py#L11-L15)).
 - `MeetingRanges` returned: `[2024, 2023, …, 2006]` — **no 2025 entry, no 2026 entry**. Plus the `Recent` bucket (ID=1) which the scraper deliberately skips at [acworth.py:46-48](src/cobb_tracker/municipalities/acworth.py#L46-L48).
@@ -51,6 +56,17 @@
 - 2024 still works: `Range=2024&Group=70` returns 103 meetings with 62 Minutes attached. Spot-checked one PDF (Type=15&ID=2115) → `application/pdf`, `%PDF-1.7`, 124 KB.
 - **What this means.** The IQM2 platform appears to be the abandoned half of the platform-cutover Sam flagged. Historical pulls 2006–2024 are intact; ongoing scrapes produce 0 new docs per run. This is exactly the kind of silent failure the audit was meant to catch.
 - 12 meeting groups exist; only one (`Group=70`) was probed. The empty-2025 finding is unlikely to differ across groups but isn't proven for all 12.
+
+**Resolution (2026-05-13):**
+
+- **Live source identified — Granicus** at `https://acworth-ga.granicus.com/ViewPublisher.php?view_id=1`. Public static HTML, no auth, no JS. All 9 bodies (Board of Aldermen, Planning & Zoning, DDA, Acworth Lake / Housing / Tree / Development Authorities, Tourism Bureau, Historic Preservation) share `view_id=1` and are paneled per year.
+- **New module:** [acworth_granicus.py](src/cobb_tracker/municipalities/acworth_granicus.py) (BeautifulSoup parse, mirroring marietta.py's shape). Smoke-tested against the live page: 302 URLs collected (157 Agendas + 145 Minutes), 9 bodies, year breakdown 43/2024 + 201/2025 + 58/2026, zero date-parse failures. GET-range against both an Agenda and Minutes URL returned `%PDF-1.4` magic.
+- **Multi-doc unlock:** the new module ingests both Agendas and Minutes from the start. Granicus does not expose a separate "Agenda Packet" link for Acworth.
+- **Signed-URL caveat (cosmetic):** Minutes URLs 302 to S3 with `X-Amz-Expires=300` (5-minute TTL). `requests.Session` follows inline so the download succeeds — but never persist the resolved blob URL. Same constraint as Smyrna PrimeGov.
+- **Signed-URL caveat (real):** AWS signed URLs are method-specific. A HEAD against the Granicus minutes endpoint follows to S3 and returns 403 (signature was computed for GET). file_ops uses GET so this is fine, but it bit the audit's verification step.
+- **Latent muni_body bug fixed alongside.** The IQM2 module never set `muni_body`, but file_ops.py:51 hard-requires it. The KeyError died in the FileOps ThreadPoolExecutor (see new cross-cutting finding 7) and went unnoticed even when IQM2 was the live source. Both Acworth modules now set the key.
+- **Cosmetic `//` fix** at [acworth.py:14](src/cobb_tracker/municipalities/acworth.py#L14) applied.
+- **CLI:** the `acworth` flag now invokes Granicus (live). New `acworth-archive` flag invokes the IQM2 historical module. `--pull-all-cities` pulls both.
 
 ### Marietta — `marietta.py` (CivicPlus AgendaCenter)
 
@@ -105,22 +121,23 @@
 
 ## Cross-cutting findings
 
-1. **Silent zero is the most common failure mode.** Acworth (post-2024) and Austell (current page) both produce empty result sets without raising or logging anything. The audit checklist's "Empty result set is *real*, not a parser miss" criterion catches both. Worth wiring a per-run sanity check ("0 new docs from a jurisdiction that historically averaged N/month → log a warning") before the Paperless rewrite, since regressions only get more expensive once we're shipping into a real document store.
+1. **Silent zero is the most common failure mode.** Acworth (post-2024) and Austell (current page) both produce empty result sets without raising or logging anything. The audit checklist's "Empty result set is *real*, not a parser miss" criterion catches both. Worth wiring a per-run sanity check ("0 new docs from a jurisdiction that historically averaged N/month → log a warning") before the Paperless rewrite, since regressions only get more expensive once we're shipping into a real document store. **(2026-05-13: count==0 guardrail wired in [__main__.py](src/cobb_tracker/__main__.py) via `_warn_if_zero`; every scraper now returns the count of enqueued URLs and `choose_muni` warns on zero. Per-module historical baselines are not yet tracked.)**
 2. **Vendor migrations are the leading cause of breakage.** Austell (Sophicity→Municode), Powder Springs (legacy domain → new domain), Acworth (IQM2 → ?). The domain catalogue task in TASKS.md A is the highest-leverage thing to do next.
 3. **Multi-doc data is already on the wire for 3 of 5 working modules.** CivicClerk (Cobb/Kennesaw) and PrimeGov (Smyrna) already return Agenda/Packet/Minutes side-by-side; the scrapers throw away two thirds of it. Marietta would also benefit but requires a different selector path. Smyrna is the cheapest to extend.
 4. **Random-key date fallback was not exercised** in any working module on this run. Powder Springs current-data dates all matched the regex on the first pass; no spell-correct or per-page deep-dive was triggered. Confirms TASKS.md note that the fallback only fires on legacy oddities.
 5. **All sampled file URLs returned real PDFs.** Five spot-checks across four vendors: Content-Type was always `application/pdf` and the body started with `%PDF-1.x`. No HTML-with-200 silent failures observed today.
-6. **Acworth's BASE_URL has a stray `//`**. Cosmetic but worth a one-line fix at [acworth.py:11-15](src/cobb_tracker/municipalities/acworth.py#L11-L15).
+6. **Acworth's BASE_URL has a stray `//`**. Cosmetic but worth a one-line fix at [acworth.py:11-15](src/cobb_tracker/municipalities/acworth.py#L11-L15). **(Fixed 2026-05-13.)**
+7. **Worker-thread exceptions are silently swallowed in `FileOps`.** [file_ops.py:39](src/cobb_tracker/file_ops.py#L39) iterates `cf.as_completed(future_to_url)` with a bare `pass` and never calls `.result()`, so any exception raised by `pull_minutes_doc` — KeyError on a missing `file_urls` dict key, network error, etc. — disappears. This is what masked the Acworth `muni_body` bug for the entire life of the module: every IQM2 download silently failed with `KeyError: 'muni_body'`. Austell has the **same latent bug** (its [austell.py:53-58](src/cobb_tracker/municipalities/austell.py#L53-L58) also never sets `muni_body`, undetected by this audit). Fix is one line: replace the bare `pass` with a try/except that logs the exception. New TASKS item filed.
 
 ## Recommended actions (delta vs. TASKS.md)
 
 These are the items the audit *concretely escalates* — not new tasks, just sharper priority:
 
-1. **Acworth migration** (new) — IQM2 is no longer the source of truth. Identify which of the 4 active Acworth domains hosts current minutes, add a module for it. Until then, the scraper produces 0 new Acworth docs per run.
+1. ~~**Acworth migration** (new) — IQM2 is no longer the source of truth. Identify which of the 4 active Acworth domains hosts current minutes, add a module for it. Until then, the scraper produces 0 new Acworth docs per run.~~ **Resolved 2026-05-13:** live source is Granicus at `acworth-ga.granicus.com`; new [acworth_granicus.py](src/cobb_tracker/municipalities/acworth_granicus.py) module added, IQM2 retained as archive-only.
 2. **Austell migration** (new) — Build a Municode Meetings adapter (new vendor, currently unrepresented in the codebase) targeting `austell-ga.municodemeetings.com`. The current scraper covers only pre-migration history.
 3. **Powder Springs domain swap** (small, do now) — replace the four constants in [powdersprings.py:27-30](src/cobb_tracker/municipalities/powdersprings.py#L27-L30) with `https://www.powderspringsga.gov/`. One-line risk reduction.
 4. **Smyrna multi-doc** (smallest unlock for the agendas/packets goal) — drop the `templateName == "Minutes"` filter at [smyrna.py:65](src/cobb_tracker/municipalities/smyrna.py#L65) and key off `templateName` as the doc-type tag. Already-flagged in TASKS.md; this audit confirms the data is there for 2026.
-5. **Sanity-check guardrail** — log a warning when a module that historically returned >0 docs returns 0. Would have surfaced Acworth and Austell automatically.
+5. ~~**Sanity-check guardrail** — log a warning when a module that historically returned >0 docs returns 0. Would have surfaced Acworth and Austell automatically.~~ **Resolved 2026-05-13** (count==0 form; baseline tracking still open).
 
 ## Raw artefacts
 

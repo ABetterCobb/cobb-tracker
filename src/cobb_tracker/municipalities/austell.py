@@ -24,7 +24,7 @@ session = requests.Session()
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0"
 
 
-def get_minutes_docs(config: CobbConfig):
+def get_minutes_docs(config: CobbConfig) -> int:
     urls = {}
     for page in AGENDA_PAGES:
         response = session.get(page, headers={"User-Agent": USER_AGENT})
@@ -33,7 +33,7 @@ def get_minutes_docs(config: CobbConfig):
             logging.error(
                 f"Request failed: {response.reason} {response.status_code}"
             )
-            return
+            return 0
         current_minutes_page = BeautifulSoup(response.text, "html.parser")
         years_container = current_minutes_page.find(
             "div", class_="mcms_RendererContentDetail"
@@ -64,3 +64,4 @@ def get_minutes_docs(config: CobbConfig):
         config=config,
     )
     doc_ops.write_minutes_doc()
+    return len(minutes_urls)

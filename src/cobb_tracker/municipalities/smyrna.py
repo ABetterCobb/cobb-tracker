@@ -47,7 +47,7 @@ def get_all_events(session: requests.Session) -> dict:
     return event_list
 
 
-def get_minutes_docs(config: CobbConfig):
+def get_minutes_docs(config: CobbConfig) -> int:
     minutes_urls = {}
 
     # The clerk was having too much fun with the meeting titles
@@ -99,3 +99,4 @@ def get_minutes_docs(config: CobbConfig):
         config=config,
     )
     doc_ops.write_minutes_doc()
+    return len(minutes_urls)

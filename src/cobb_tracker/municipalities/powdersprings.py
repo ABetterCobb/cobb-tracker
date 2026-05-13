@@ -51,7 +51,7 @@ get_year = re.compile(
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0"
 
 
-def get_minutes_docs(config: CobbConfig):
+def get_minutes_docs(config: CobbConfig) -> int:
     archive_groups = {}
     response = session.get(
         LIST_OF_ARCHIVE_SECTIONS, headers={"User-Agent": USER_AGENT}
@@ -59,7 +59,7 @@ def get_minutes_docs(config: CobbConfig):
 
     if not response.ok:
         logging.error("Request failed:", response.reason, response.status_code)
-        return
+        return 0
 
     soup = BeautifulSoup(response.text, "html.parser")
     archive_details = soup.find("table", summary="Archive Details")
@@ -79,6 +79,7 @@ def get_minutes_docs(config: CobbConfig):
         config=config,
     )
     doc_ops.write_minutes_doc()
+    return len(minutes_urls)
 
 
 def get_meeting_info(archive_groups: dict):
