@@ -55,7 +55,7 @@ def signal_handler(signal, frame):
     sys.exit(0)
 
 
-def get_minutes_docs(config: CobbConfig):
+def get_minutes_docs(config: CobbConfig) -> int:
     USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0"
     signal.signal(signal.SIGINT, signal_handler)
     docker_location = shutil.which("docker")
@@ -223,3 +223,4 @@ def get_minutes_docs(config: CobbConfig):
         config=config,
     )
     doc_ops.write_minutes_doc()
+    return len(minutes_urls)

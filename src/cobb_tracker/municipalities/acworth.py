@@ -1,3 +1,9 @@
+"""Acworth IQM2 historical archive.
+
+Acworth migrated off IQM2 at end of 2024; current ingest lives in
+``acworth_granicus.py``. This module pulls the 2006–2024 historical corpus
+that still serves correctly from ``acworthcityga.iqm2.com``.
+"""
 from datetime import datetime
 import concurrent.futures as cf
 import logging
@@ -11,7 +17,7 @@ from cobb_tracker import file_ops
 BASE_URL = "https://acworthcityga.iqm2.com/"
 # Agenda is type 15, then you specify the ID
 BASE_FILE_URL = f"{BASE_URL}Citizens/FileOpen.aspx?"
-STARTUP_URL = f"{BASE_URL}/api/Agency/StartupData"
+STARTUP_URL = f"{BASE_URL}api/Agency/StartupData"
 MEETINGS_URL = f"{BASE_URL}api/Meeting?"
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0"
@@ -58,7 +64,7 @@ def get_all_events(session: requests.Session) -> list:
     return event_list
 
 
-def get_minutes_docs(config: CobbConfig):
+def get_minutes_docs(config: CobbConfig) -> int:
     """
     This will format the data and pass it off FileOps to be downloaded
     and written to the filesystem
@@ -87,6 +93,7 @@ def get_minutes_docs(config: CobbConfig):
                 minutes_urls[file_url] = {}
                 minutes_urls[file_url]["municipality"] = "Acworth"
                 minutes_urls[file_url]["meeting_name"] = event_type
+                minutes_urls[file_url]["muni_body"] = event_type
                 minutes_urls[file_url]["date"] = event_date
                 minutes_urls[file_url]["file_type"] = "minutes"
 
@@ -97,3 +104,4 @@ def get_minutes_docs(config: CobbConfig):
             config=config,
         )
         doc_ops.write_minutes_doc()
+    return len(minutes_urls)

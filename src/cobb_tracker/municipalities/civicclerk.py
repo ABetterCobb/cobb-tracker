@@ -52,7 +52,7 @@ class CivicClerk:
                 break
         return event_list
 
-    def get_minutes_docs(self, config: CobbConfig):
+    def get_minutes_docs(self, config: CobbConfig) -> int:
         minutes_urls = {}
         session = requests.Session()
         for event in self.get_all_events(session):
@@ -87,3 +87,4 @@ class CivicClerk:
             config=config,
         )
         doc_ops.write_minutes_doc()
+        return len(minutes_urls)

@@ -10,12 +10,21 @@ from cobb_tracker.municipalities import (
     civicclerk,
     smyrna,
     acworth,
+    acworth_granicus,
     powdersprings,
     austell,
     novusagenda,
 )
 from cobb_tracker.pdf_parse import DatabaseOps
 from cobb_tracker.cobb_config import CobbConfig
+
+
+def _warn_if_zero(label: str, count: int) -> None:
+    if count == 0:
+        logging.warning(
+            f"{label} produced 0 documents this run — "
+            "possible vendor cutover or selector breakage"
+        )
 
 
 def choose_muni(municipality: str, config: CobbConfig):
@@ -25,40 +34,60 @@ def choose_muni(municipality: str, config: CobbConfig):
     """
     muni = municipality.lower()
     if muni == "marietta" or config.args.pull_all_cities:
-        marietta.get_minutes_docs(config=config)
+        _warn_if_zero("marietta", marietta.get_minutes_docs(config=config))
 
     if muni == "cobb" or config.args.pull_all_cities:
         cobb_civic = civicclerk.CivicClerk(
             base_url="https://cobbcoga.api.civicclerk.com/v1", muni="Cobb"
         )
-        cobb_civic.get_minutes_docs(config=config)
+        _warn_if_zero("cobb (CivicClerk)", cobb_civic.get_minutes_docs(config=config))
 
     if muni == "austell" or config.args.pull_all_cities:
-        austell.get_minutes_docs(config=config)
+        _warn_if_zero("austell", austell.get_minutes_docs(config=config))
 
     if muni == "acworth" or config.args.pull_all_cities:
-        acworth.get_minutes_docs(config=config)
+        _warn_if_zero(
+            "acworth (Granicus)",
+            acworth_granicus.get_minutes_docs(config=config),
+        )
+
+    if muni == "acworth-archive" or config.args.pull_all_cities:
+        _warn_if_zero(
+            "acworth (IQM2 archive)",
+            acworth.get_minutes_docs(config=config),
+        )
 
     if muni == "powdersprings" or config.args.pull_all_cities:
-        powdersprings.get_minutes_docs(config=config)
+        _warn_if_zero(
+            "powdersprings", powdersprings.get_minutes_docs(config=config)
+        )
 
     if muni == "kennesaw" or config.args.pull_all_cities:
         kennesaw_civic = civicclerk.CivicClerk(
             base_url="https://kennesawga.api.civicclerk.com/v1",
             muni="Kennesaw"
         )
-        kennesaw_civic.get_minutes_docs(config=config)
-        novusagenda.get_minutes_docs(config=config)
+        _warn_if_zero(
+            "kennesaw (CivicClerk)",
+            kennesaw_civic.get_minutes_docs(config=config),
+        )
+        _warn_if_zero(
+            "kennesaw (NovusAgenda)",
+            novusagenda.get_minutes_docs(config=config),
+        )
 
     if muni == "mableton" or config.args.pull_all_cities:
         mableton_civic = civicclerk.CivicClerk(
             base_url="https://mabletonga.api.civicclerk.com/v1",
             muni="Mableton"
         )
-        mableton_civic.get_minutes_docs(config=config)
+        _warn_if_zero(
+            "mableton (CivicClerk)",
+            mableton_civic.get_minutes_docs(config=config),
+        )
 
     if muni == "smyrna" or config.args.pull_all_cities:
-        smyrna.get_minutes_docs(config=config)
+        _warn_if_zero("smyrna", smyrna.get_minutes_docs(config=config))
 
 
 def main():

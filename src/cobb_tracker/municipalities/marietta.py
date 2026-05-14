@@ -88,7 +88,7 @@ def get_years(agenda_container: Tag) -> list[str]:
     return filtered_year_list
 
 
-def get_minutes_docs(config: CobbConfig):
+def get_minutes_docs(config: CobbConfig) -> int:
     session = requests.Session()
 
     response = session.get(URL_AGENDAS, headers={"User-Agent": USER_AGENT})
@@ -96,12 +96,13 @@ def get_minutes_docs(config: CobbConfig):
         logging.error(
             f"Request failed: {response.reason} {response.status_code}"
         )
-        return
+        return 0
 
     soup = BeautifulSoup(response.content, "html.parser")
     agenda_containers = soup.find_all(
         "div", class_="listing listingCollapse noHeader"
     )
+    total = 0
     for container in agenda_containers:
         minutes_urls = {}
         year_list = get_years(container)
@@ -133,12 +134,14 @@ def get_minutes_docs(config: CobbConfig):
                     minutes_url = f"{URL_BASE}{minutes_link.get('href')}"
                     minutes_urls[minutes_url] = row
 
+        total += len(minutes_urls)
         name_documents(
             minutes_urls=minutes_urls,
             session=session,
             muni_body=muni_body,
             config=config,
         )
+    return total
 
 
 def clean_name(input_string: str) -> str:
