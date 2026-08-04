@@ -7,6 +7,7 @@ import sys
 import io
 import os
 import logging
+import re
 from pathlib import Path
 import requests
 from multiprocessing import Process
@@ -43,6 +44,30 @@ class PaperlessOps:
         self.config = config
         self.mins_and_checksums = {}
 
+    def get_document_type(self, doc_type: str):
+        doc_type_url = f"{self.PAPERLESS_URL}/api/document_types/"
+        doc_type_query = f"{doc_type_url}?name__iexact={doc_type}"
+        response = requests.get(doc_type_query, headers=self.HEADERS).json()
+
+        return response["results"][0]["id"]
+    def get_tag(self, tag: str):
+        tag_url = f"{self.PAPERLESS_URL}/api/tags/"
+        tag_query = f"{tag_url}?name__iexact={tag}"
+        response = requests.get(tag_query, headers=self.HEADERS).json()
+        
+        if response["count"] == 0:
+            return None
+        return response["results"][0]["id"]
+
+    def set_tag(self, tag: str):
+        tag_url = f"{self.PAPERLESS_URL}/api/tags/"
+        data = {
+            "name": tag,
+            "owner": 1
+        }
+        response = requests.post(tag_url, headers=self.HEADERS, data=data)
+
+
     def pdf_to_paperless(self):
         all_minutes_files = np.array(self.doc_ops.minutes_files())
         doc_ops = file_ops.FileList(minutes_dir=self.MINUTES_DIR)
@@ -70,6 +95,9 @@ class PaperlessOps:
             The PDFs are sent to paperless ngx. Provide the URL and the Token
         """
         with self.SEMAPHORE:
+            post_document=f"{self.PAPERLESS_URL}/api/documents/post_document/"
+            correspondents=f"{self.PAPERLESS_URL}/api/correspondents/"
+            doc_types=f"{self.PAPERLESS_URL}/api/document_types/"
             file = str(minutes_file)
 
             rel_doc_path = file.replace(
@@ -80,25 +108,64 @@ class PaperlessOps:
                 .split(os.path.sep)[1]
                 .replace("_", " ")
             )
+
+            #Set correspondent to municipality
+            muni_query=f"{correspondents}?name__iexact={municipality}"
+            muni_correspondent = requests.get(muni_query, headers=self.HEADERS).json()
+
+            if muni_correspondent["count"] == 0:
+                data = {
+                    "name": municipality,
+                    "owner": 1
+                }
+                response = requests.post(correspondents, headers=self.HEADERS, data=data)
+
+            muni_correspondent = requests.get(muni_query, headers=self.HEADERS).json()
+            muni_corr_id = muni_correspondent["results"][0]["id"]
+
+            #Get Committee/Body
             body = (
                 os.path.normpath(rel_doc_path)
                 .split(os.path.sep)[2]
                 .replace("_", " ")
             )
-            date = (os.path.split(Path(file))[1]).replace("-minutes.pdf", "")
+            if self.get_tag(body) is None:
+                self.set_tag(body)
+             
+            #Set document type
+            if "minutes" in os.path.split(Path(file))[1]:
+                doc_type = "Minutes"
+
+            doc_type_query = f"{doc_types}?name__iexact={doc_type}"
+            document_type = requests.get(doc_type_query, headers=self.HEADERS).json()
+            if document_type["count"] == 0:
+                data = {
+                    "name": doc_type,
+                    "owner": 1
+                }
+                response = requests.post(doc_types, headers=self.HEADERS, data=data)
+
+
+            #Post file
+            match = re.match(r"(\d{4}-\d{2}-\d{2})", (os.path.split(Path(file))[1]))
+
+            date = match.group(1)
 
             files = {
                 "document": (minutes_file, open(minutes_file, 'rb'), "application/pdf"),
             }
+
             data = {
                 "created": date,
                 "document": open(minutes_file,'rb'),
+                "document_type": self.get_document_type(doc_type), 
                 "title": f"{body} minutes",
+                "tags": [self.get_tag(body)],
                 "from_webui": False,
+                "correspondent": muni_corr_id,
             }
 
             post_document=f"{self.PAPERLESS_URL}/api/documents/post_document/"
-            print(post_document)
-            time.sleep(3)
+            time.sleep(1.5)
             response = requests.post(post_document, headers=self.HEADERS, files=files, data=data)
-            print(response.content)
+            print(response.content, date)
